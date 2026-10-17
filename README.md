@@ -275,7 +275,7 @@ If you use this codebase or benchmark data in your research, please cite our pap
 ```bibtex
 @article{asker2026physics,
   title={Physics-Constrained Dynamic Identification and Noise Estimation for Underactuated Systems},
-  author={Asker, Ahmed and Co-Authors},
+  author={Asker, Ahmed},
   journal={IEEE Transactions on Robotics},
   volume={XX},
   number={X},
