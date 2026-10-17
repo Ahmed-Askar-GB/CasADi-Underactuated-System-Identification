@@ -23,8 +23,8 @@ Under measurement noise, encoder quantization, or numerical acceleration differe
 While classical **Unconstrained Momentum-Filtered Least Squares (UMF-LS)** bypasses numerical acceleration differentiation through generalized momentum filtering, it remains an unconstrained linear transformation that does not prevent parameter collapse under noise.
 
 This repository provides an end-to-end **Physics-Constrained Identification Framework** based on algorithmic differentiation over computational Directed Acyclic Graphs (DAGs) in **CasADi**:
-1. **Automated Physical Constraint Extraction:** Automatic derivation of configuration-independent linear symmetry ($A_{\mathrm{sym}} \bm{\Theta} = \mathbf{0}$), passivity skew-symmetry ($A_{\mathrm{skew}} \bm{\Theta} = \mathbf{0}$), and Sylvester principal minor positive-definiteness constraints ($\Delta_k(D(\bm{q})) \ge \epsilon_p > 0$) without symbolic polynomial bloat.
-2. **Joint Profile Maximum Likelihood Estimation (MLE):** Simultaneous identification of dynamic/friction parameters and statistical sensor noise variance ($\hat{\sigma}^2$) to parameterize downstream Kalman filters and state observers.
+1. **Automated Physical Constraint Extraction:** Automatic derivation of minimal linear symmetry ($A_{\mathrm{sym}} \bm{\Theta} = \mathbf{0}$) and passivity skew-symmetry ($A_{\mathrm{skew}} \bm{\Theta} = \mathbf{0}$) constraints via algorithmic differentiation and SVD/QR factorization, Sylvester principal minor positive-definiteness constraints ($\Delta_k(D(\bm{q})) \ge \epsilon_p > 0$), and sector-bounded physical parameter constraints ($\bm{\Theta} \in \mathcal{B}_{\mathrm{phys}}$).
+2. **Joint Profile Maximum Likelihood Estimation (MLE):** Simultaneous identification of dynamic/friction parameters and statistical equation-error residual variance ($\hat{\sigma}^2$) to parameterize downstream Kalman filter process disturbance covariances ($Q_\tau = \hat{\sigma}^2 I$) and state observers.
 3. **Normal-Equation Condensation:** Condensation of 40,000+ temporal observation rows into compact Gram matrix sufficient statistics ($H = W^T W$, $\bm{g} = W^T \bm{\Gamma}$), cutting interior-point solve times from $6.44\text{ s}$ to **$13\text{ ms}$** (**$488.7\times$ speedup**).
 4. **Comprehensive Benchmarking on Simulation & Experimental Data:**
    - **3-DOF Double Inverted Pendulum on a Cart (DIPC):** High-fidelity multi-body Simscape simulation under controlled stochastic measurement noise ($\sigma_{\text{true}} = 0.05\text{ N}$).
@@ -218,6 +218,10 @@ cd('..');
 
 *\*Indicates numerical null-space parameter collapse ($>99.5\%$ loss of parameter norm).*
 
+> [!NOTE]
+> **Unreduced Block-Diagonal Regressor Rationale:**  
+> The formulation intentionally adopts an unreduced, subsystem-partitioned LIP parameterization $\bm{\Theta} \in \mathbb{R}^{24}$ and block-diagonal regressor $W = \text{blkdiag}(L_1, L_2, L_3) \in \mathbb{R}^{3N \times 24}$ rather than a manually reduced base-parameter set. Because $W$ is block-diagonal, unconstrained least-squares solvers (U-LS and UMF-LS) decouple across subsystems, failing to exploit shared physical parameters across links (such as $D_{12}=D_{21}$ and $D_{13}=D_{31}$). This setup rigorously demonstrates that automated algorithmic differentiation (AD) automatically discovers and enforces the necessary cross-subsystem coupling constraints $A_{\mathrm{sym}}\bm{\Theta} = \mathbf{0}$ and $A_{\mathrm{skew}}\bm{\Theta} = \mathbf{0}$ (isolated via SVD/QR factorization), completely resolving parameter identifiability without manual symbolic base-parameter reduction.
+
 ---
 
 ### Benchmark 2: 2-DOF Rotary Furuta Pendulum (RIFP Experimental Hardware Data)
@@ -233,6 +237,20 @@ cd('..');
 | $f_{v2}$ | Pendulum Viscous Friction | $\text{N}\cdot\text{m}\cdot\text{s/rad}$ | $0.0000^*$ | $0.0014$ | $0.0006$ | **$0.0006$** |
 | $f_{c1}$ | Arm Coulomb Stiction | $\text{N}\cdot\text{m}$ | $0.0097$ | $0.0074$ | $0.0181$ | **$0.0181$** |
 | $f_{c2}$ | Pendulum Coulomb Stiction | $\text{N}\cdot\text{m}$ | $0.0000^*$ | $0.0041$ | $0.0086$ | **$0.0086$** |
+
+> [!NOTE]
+> **Experimental Ground Truth:**  
+> Link masses and CAD measurements provide kinematic completeness; derived base parameters $\theta_1, \dots, \theta_5$ and friction coefficients represent the calibrated experimental ground-truth benchmark identified in Aguilar-Sierra et al. (2014).
+
+#### Directional Asymmetric Joint Friction Identification (RIFP)
+When identified with directional friction asymmetry, the regularized friction formulation resolves into:
+- **Actuated Arm ($q_1$):**
+  - Positive rotation: $f_{c1}^+ = 0.0193\text{ N}\cdot\text{m}$, $f_{v1}^+ = 0.0082\text{ N}\cdot\text{m}\cdot\text{s/rad}$
+  - Negative rotation: $f_{c1}^- = 0.0169\text{ N}\cdot\text{m}$, $f_{v1}^- = 0.0090\text{ N}\cdot\text{m}\cdot\text{s/rad}$
+- **Passive Pendulum Bearing ($q_2$):**
+  - Symmetric dissipation: $f_{c2} = 0.0086\text{ N}\cdot\text{m}$, $f_{v2} = 0.0006\text{ N}\cdot\text{m}\cdot\text{s/rad}$
+
+This asymmetric formulation captures subtle directional variations while retaining smooth $C^\infty$ differentiability via $\tanh(\dot{q}_i/\epsilon_v)$ for interior-point solvers.
 
 ---
 
@@ -256,21 +274,62 @@ cd('..');
 ## 🔬 Mathematical Formulations
 
 ### 1. Partitioned Underactuated Dynamics
-$$\begin{bmatrix} D_{aa}(\bm{q}) & D_{au}(\bm{q}) \\ D_{ua}(\bm{q}) & D_{uu}(\bm{q}) \end{bmatrix} \begin{bmatrix} \ddot{\bm{q}}_a \\ \ddot{\bm{q}}_u \end{bmatrix} + \begin{bmatrix} \bm{h}_a(\bm{q}, \dot{\bm{q}}) \\ \bm{h}_u(\bm{q}, \dot{\bm{q}}) \end{bmatrix} = \begin{bmatrix} \bm{\tau}_a \\ \mathbf{0} \end{bmatrix}$$
+Mechanical systems with $n$ generalized coordinates and $m < n$ independent control actuators partition into actuated ($\bm{q}_a \in \mathbb{R}^m$) and unactuated ($\bm{q}_u \in \mathbb{R}^{n-m}$) coordinates:
 
-### 2. Linear Condensed Optimization Problem
-$$\min_{\bm{\Theta}} \quad \frac{d N}{2} \ln \left( \bm{\Theta}^T H \bm{\Theta} - 2 \bm{g}^T \bm{\Theta} + c \right)$$
-$$\text{subject to} \quad A_{\mathrm{sym}} \bm{\Theta} = \mathbf{0}, \quad A_{\mathrm{skew}} \bm{\Theta} = \mathbf{0}$$
-$$\Delta_k(D(\bm{q}^{(j)}; \bm{\Theta})) \ge \epsilon_p, \quad k = 1, \dots, n, \quad j = 1, \dots, N_c$$
-$$\bm{\Theta}_{\mathrm{dyn}} \ge \mathbf{0}, \quad \bm{\Theta}_{\mathrm{fric}} \ge \mathbf{0}$$
+$$\begin{bmatrix} D_{aa}(\bm{q}) & D_{au}(\bm{q}) \\ D_{ua}(\bm{q}) & D_{uu}(\bm{q}) \end{bmatrix} \begin{bmatrix} \ddot{\bm{q}}_a \\ \ddot{\bm{q}}_u \end{bmatrix} + \begin{bmatrix} \bm{C}_{aa}\dot{\bm{q}}_a + \bm{C}_{au}\dot{\bm{q}}_u \\ \bm{C}_{ua}\dot{\bm{q}}_a + \bm{C}_{uu}\dot{\bm{q}}_u \end{bmatrix} + \begin{bmatrix} \bm{g}_a(\bm{q}) \\ \bm{g}_u(\bm{q}) \end{bmatrix} + \begin{bmatrix} \bm{\tau}_{fa}(\dot{\bm{q}}_a) \\ \bm{\tau}_{fu}(\dot{\bm{q}}_u) \end{bmatrix} = \begin{bmatrix} \bm{\tau}_a \\ \mathbf{0} \end{bmatrix}$$
 
-Where $H = W^T W$, $\bm{g} = W^T \bm{\Gamma}$, and $c = \bm{\Gamma}^T \bm{\Gamma}$ are constant BLAS sufficient statistics.
+Because unactuated coordinates receive zero generalized control forces ($\bm{\tau}_u \equiv \mathbf{0}$), their identification equation is strictly homogeneous ($W_u \bm{\Theta} \approx \mathbf{0}$).
+
+### 2. Algorithmic Differentiation & Minimal Constraint Extraction via SVD/QR
+To eliminate polynomial explosion in symbolic computer algebra systems, the framework builds computational Directed Acyclic Graphs (DAGs) in CasADi and extracts exact constraint matrices automatically:
+- **Linear Inertia Symmetry ($A_{\mathrm{sym}} \bm{\Theta} = \mathbf{0}$):** Evaluates row gradients:
+  $$\bm{a}_{\mathrm{sym}, ij}^T = \frac{\partial \left( D_{ij}(\bm{q}) - D_{ji}(\bm{q}) \right)}{\partial \bm{\Theta}}$$
+  across independent configurations on the state manifold and extracts the minimal linearly independent row space via Singular Value Decomposition (SVD) or rank-revealing QR factorization.
+- **Passivity Skew-Symmetry ($A_{\mathrm{skew}} \bm{\Theta} = \mathbf{0}$):** The fundamental physical passivity condition $\dot{\bm{q}}^T (\dot{D} - 2C) \dot{\bm{q}} = 0$ requires skew-symmetry $N(\bm{q}, \dot{\bm{q}}) = \dot{D} - 2C = -N^T$. The minimal constraint matrix $A_{\mathrm{skew}}$ is extracted by evaluating the row gradients of skew-symmetric pairs across test configurations and isolating the linearly independent basis via SVD/QR.
+- **Sylvester Principal-Minor Positive Definiteness ($\Delta_k(D(\bm{q})) \ge \epsilon_p$):** Strict positive definiteness $D(\bm{q}) \succ 0$ is enforced configuration-wise across the reachable operational envelope $\mathcal{Q}_{\text{reach}}$, ensuring well-conditioned numerical inversion throughout forward simulation and MPC without non-convex 10-parameter pseudo-inertia reconstructions.
+
+### 3. Profile Maximum Likelihood Estimation & Equation-Error Residuals
+Assuming additive Gaussian measurement noise on the canonical equation-error observation model:
+
+$$\bm{\Gamma}_k = W_k \bm{\Theta} + \bm{\varepsilon}_k, \quad \bm{\varepsilon}_k \sim \mathcal{N}(\mathbf{0}, \sigma^2 I_{d \times d})$$
+
+The negative log-likelihood across all $N$ temporal observations ($M = d \cdot N$ total scalar measurements) is:
+
+$$\mathcal{L}(\bm{\Theta}, \sigma^2) = \frac{d N}{2} \ln(2\pi) + \frac{d N}{2} \ln(\sigma^2) + \frac{1}{2\sigma^2} \| W\bm{\Theta} - \bm{\Gamma} \|_2^2$$
+
+Concentrating out $\sigma^2$ analytically via its optimal variance estimate $\hat{\sigma}^2(\bm{\Theta}) = \frac{1}{d N} \| W\bm{\Theta} - \bm{\Gamma} \|_2^2$ produces the profile log-likelihood objective:
+
+$$\min_{\bm{\Theta}} \quad J(\bm{\Theta}) = \frac{d N}{2} \ln \left( \| W\bm{\Theta} - \bm{\Gamma} \|_2^2 \right) \equiv \frac{d N}{2} \ln \left( \bm{\Theta}^T H \bm{\Theta} - 2 \bm{g}^T \bm{\Theta} + c \right)$$
+
+where $H = W^T W$, $\bm{g} = W^T \bm{\Gamma}$, and $c = \bm{\Gamma}^T \bm{\Gamma}$ are pre-computed BLAS-3 sufficient statistics.
+
+### 4. Complete Optimization Problem with Physical Admissible Set $\mathcal{B}_{\mathrm{phys}}$
+$$\begin{aligned}
+\min_{\bm{\Theta}} \quad & \frac{d N}{2} \ln \left( \bm{\Theta}^T H \bm{\Theta} - 2 \bm{g}^T \bm{\Theta} + c \right) \\
+\text{s.t.} \quad & A_{\mathrm{sym}} \bm{\Theta} = \mathbf{0} \\
+& A_{\mathrm{skew}} \bm{\Theta} = \mathbf{0} \\
+& \Delta_k(D(\bm{q}^{(j)}; \bm{\Theta})) \ge \epsilon_p, \quad k = 1, \dots, n, \quad j = 1, \dots, N_c \\
+& \bm{\Theta} \in \mathcal{B}_{\mathrm{phys}}
+\end{aligned}$$
+
+where the physically admissible parameter set is defined as:
+
+$$\mathcal{B}_{\mathrm{phys}} = \left\{ \bm{\Theta} : S_{\text{pos}}\bm{\Theta}_{\text{dyn}} \ge \mathbf{0}, \quad \bm{\Theta}_{\text{fric}} \ge \mathbf{0}, \quad \bm{\Theta}_{\text{sector}} \le \mathbf{0} \right\}$$
+
+Here, $S_{\text{pos}}$ selects strictly positive physical parameters (such as cart mass, link inertias, and friction coefficients), while admitting negative sector bounds for gravitational and geometric cross-terms (such as $x_{2,9}, x_{2,10}, x_{3,6} \le 0$ on the DIPC).
+
+### 5. Downstream Dynamic Observer Parameterization & Covariance Calibration
+The estimated residual variance $\hat{\sigma}^2$ directly parameterizes state estimators and Kalman filters:
+- **Dynamic Process Disturbance Covariance:** In robotics state observers (EKF, UKF, MHE), generalized torque disturbances are parameterized by $Q_\tau = \hat{\sigma}^2 I_{d \times d}$ (or torque measurement noise covariance $R_\tau = \hat{\sigma}^2 I_{d \times d}$ when direct force/torque sensing is present).
+- **Parameter Estimation Covariance:** Calibrated parameter uncertainty ellipsoids are obtained directly from the inverted Hessian at the constrained optimum:
+  $$\text{Cov}(\hat{\bm{\Theta}}) \approx \left( \nabla^2 J(\hat{\bm{\Theta}}) \right)^{-1} \approx \hat{\sigma}^2 H^{-1}$$
+  or projected onto the null space of active linear equality constraints $\mathcal{N}([A_{\mathrm{sym}}^T, A_{\mathrm{skew}}^T]^T)$.
 
 ---
 
 ## 📖 Citation
 
-If you use this codebase or benchmark data in your research, please cite our paper:
+If you use this codebase or benchmark data in your research, please cite our paper and repository:
 
 ```bibtex
 @article{asker2026physics,
@@ -282,6 +341,14 @@ If you use this codebase or benchmark data in your research, please cite our pap
   pages={1--16},
   year={2026},
   publisher={IEEE}
+}
+
+@misc{AskerRepo2026,
+  author       = {Asker, Ahmed},
+  title        = {{CasADi Underactuated System Identification: Physics-Constrained Dynamic Identification and Noise Estimation for Underactuated Systems}},
+  year         = {2026},
+  howpublished = {\url{https://github.com/Ahmed-Askar-GB/CasADi-Underactuated-System-Identification}},
+  note         = {{GitHub} repository}
 }
 ```
 
