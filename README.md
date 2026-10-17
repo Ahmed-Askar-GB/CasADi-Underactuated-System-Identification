@@ -7,8 +7,11 @@
 
 Official MATLAB/Simulink and CasADi implementation for the paper:  
 **"Physics-Constrained Dynamic Identification and Noise Estimation for Underactuated Systems"**  
-*Ahmed Asker and Co-Authors*  
-*Robotics and Autonomous Systems Laboratory, Egypt-Japan University of Science and Technology (E-JUST), Alexandria, Egypt.*
+**Ahmed Asker** $^{1,2,*}$, **Omar Salah** $^{3}$, and **Haitham El-Hussieny** $^{1}$  
+$^{1}$ *Department of Mechatronics and Robotics Engineering, Egypt-Japan University of Science and Technology (E-JUST), New Borg El-Arab City, Alexandria 21934, Egypt*  
+$^{2}$ *Department of Production Engineering and Mechanical Design, Faculty of Engineering, Mansoura University, Mansoura 35516, Egypt*  
+$^{3}$ *Mechatronics Engineering Department, Faculty of Engineering, Assiut University, Assiut 71516, Egypt*  
+$^{*}$ *Corresponding author: ahmed.asker@ejust.edu.eg*
 
 ---
 
@@ -334,13 +337,10 @@ If you use this codebase or benchmark data in your research, please cite our pap
 ```bibtex
 @article{asker2026physics,
   title={Physics-Constrained Dynamic Identification and Noise Estimation for Underactuated Systems},
-  author={Asker, Ahmed},
-  journal={IEEE Transactions on Robotics},
-  volume={XX},
-  number={X},
-  pages={1--16},
+  author={Asker, Ahmed and Salah, Omar and El-Hussieny, Haitham},
+  journal={},
   year={2026},
-  publisher={IEEE}
+  note={Under review}
 }
 
 @misc{AskerRepo2026,
