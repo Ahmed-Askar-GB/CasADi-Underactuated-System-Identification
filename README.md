@@ -1,0 +1,291 @@
+# Physics-Constrained Dynamic Identification and Noise Estimation for Underactuated Systems
+
+[![MATLAB](https://img.shields.io/badge/MATLAB-R2022b%20--%20R2026a-blue.svg)](https://www.mathworks.com/products/matlab.html)
+[![CasADi](https://img.shields.io/badge/CasADi-v3.5%20--%20v3.8+-brightgreen.svg)](https://web.casadi.org/)
+[![IPOPT](https://img.shields.io/badge/Solver-IPOPT-orange.svg)](https://coin-or.github.io/Ipopt/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+Official MATLAB/Simulink and CasADi implementation for the paper:  
+**"Physics-Constrained Dynamic Identification and Noise Estimation for Underactuated Systems"**  
+*Ahmed Asker and Co-Authors*  
+*Robotics and Autonomous Systems Laboratory, Egypt-Japan University of Science and Technology (E-JUST), Alexandria, Egypt.*
+
+---
+
+## 📌 Overview
+
+Dynamic parameter identification of **underactuated mechanical systems** (systems with fewer independent control actuators than generalized degrees of freedom) is an inherently ill-posed problem. Because passive, unactuated joints receive **zero external actuation force or torque** ($\bm{\tau}_u \equiv \mathbf{0}$), their corresponding regression sub-problems are strictly homogeneous:
+
+$$W_u(\bm{q}, \dot{\bm{q}}, \ddot{\bm{q}}) \bm{\Theta}_u \approx \mathbf{0}$$
+
+Under measurement noise, encoder quantization, or numerical acceleration differentiation errors, unconstrained least-squares estimators trivially minimize algebraic residuals by driving passive parameters toward zero ($\bm{\Theta}_u \to \mathbf{0}$). This results in **numerical null-space collapse** ($>99\%$ loss of estimated mass and inertia), negative mass matrices violating positive definiteness ($D(\bm{q}) \nsucc 0$), and immediate divergence during forward dynamic integration.
+
+While classical **Unconstrained Momentum-Filtered Least Squares (UMF-LS)** bypasses numerical acceleration differentiation through generalized momentum filtering, it remains an unconstrained linear transformation that does not prevent parameter collapse under noise.
+
+This repository provides an end-to-end **Physics-Constrained Identification Framework** based on algorithmic differentiation over computational Directed Acyclic Graphs (DAGs) in **CasADi**:
+1. **Automated Physical Constraint Extraction:** Automatic derivation of configuration-independent linear symmetry ($A_{\mathrm{sym}} \bm{\Theta} = \mathbf{0}$), passivity skew-symmetry ($A_{\mathrm{skew}} \bm{\Theta} = \mathbf{0}$), and Sylvester principal minor positive-definiteness constraints ($\Delta_k(D(\bm{q})) \ge \epsilon_p > 0$) without symbolic polynomial bloat.
+2. **Joint Profile Maximum Likelihood Estimation (MLE):** Simultaneous identification of dynamic/friction parameters and statistical sensor noise variance ($\hat{\sigma}^2$) to parameterize downstream Kalman filters and state observers.
+3. **Normal-Equation Condensation:** Condensation of 40,000+ temporal observation rows into compact Gram matrix sufficient statistics ($H = W^T W$, $\bm{g} = W^T \bm{\Gamma}$), cutting interior-point solve times from $6.44\text{ s}$ to **$13\text{ ms}$** (**$488.7\times$ speedup**).
+4. **Comprehensive Benchmarking on Simulation & Experimental Data:**
+   - **3-DOF Double Inverted Pendulum on a Cart (DIPC):** High-fidelity multi-body Simscape simulation under controlled stochastic measurement noise ($\sigma_{\text{true}} = 0.05\text{ N}$).
+   - **2-DOF Rotary Inverted Furuta Pendulum (RIFP):** Experimental hardware dataset ($20,000$ empirical data samples at $1\text{ kHz}$) evaluated under full-length ($20\text{ s}$) and truncated sliding observation horizons ($0.3\text{ s} - 2.0\text{ s}$).
+
+---
+
+## 🗂 Repository Structure
+
+```
+CasADi Underactuated System Identification/
+├── README.md                           # Documentation, replication instructions, benchmark tables
+├── LICENSE                             # MIT Open-Source License
+├── .gitignore                          # MATLAB / LaTeX / Git build artifact filter
+│
+├── main_identification.m               # Master replication script (runs Benchmarks 1 & 2, generates tables & figures)
+├── Generate_All_Figures.m              # Standalone publication figure generator (generates Figures 1-8 instantly)
+├── run_dipc_benchmark_standalone.m     # Standalone runner for 3-DOF DIPC simulation benchmark
+├── run_furuta_benchmark_standalone.m   # Standalone runner for 2-DOF RIFP experimental benchmark
+│
+├── core/                               # Algorithmic differentiation and kinematics engines
+│   ├── casadi_dh_dyn.m                 # CasADi SX-based Denavit-Hartenberg dynamics, Jacobians, and passivity
+│   ├── build_regressor.m               # Symbolic-to-numeric regressor generator & QR base parameter reduction
+│   ├── extract_constraints.m           # Automated extraction of symmetry, skew-symmetry & positive-definiteness
+│   ├── DH_dyn.m                        # General symbolic DH Lagrangian dynamics modeling
+│   ├── Cart_sys.m                      # Symbolic 3-DOF DIPC modeling & Euler-Lagrange verification
+│   └── Furuta_sys.m                    # Symbolic & CasADi 2-DOF RIFP modeling & verification
+│
+├── models/                             # Dynamic and contact/friction models
+│   └── nonlinear_friction.m            # Regularized hyperbolic tangent symmetric & asymmetric friction models
+│
+├── identification/                     # Estimation and simulation engines
+│   ├── opti_estimator.m                # High-performance condensed CasADi Opti estimator (MLE + physics constraints)
+│   ├── benchmark_solvers.m             # Baseline solvers: Direct OLS, Decoupled OLS, Aguilar-Sierra Filtered LS
+│   ├── run_dipc_benchmark.m            # 3-DOF DIPC identification pipeline, noise injection, and RK4 validation
+│   └── simulate_furuta.m               # 2-DOF RIFP multi-step forward dynamic RK4 simulator
+│
+├── data/                               # Experimental and simulation datasets
+│   ├── furutadataexp.mat               # 2-DOF RIFP experimental dataset (20,000 samples @ 1 kHz)
+│   ├── Sim1.mat                        # 3-DOF DIPC simulation dataset under multi-frequency excitation
+│   ├── Sim2.mat                        # Supplementary DIPC validation trajectory
+│   ├── load_furuta_data.m              # Zero-phase FIR Nuttall filtering & central differencing
+│   └── identification_results.mat      # Pre-computed benchmark workspace for instant figure reproduction
+│
+├── simulink/                           # Multi-body simulation models
+│   ├── Model_under1.slx                # Underactuated 3-DOF DIPC Simscape Multibody model
+│   ├── Model1.slx                      # Fully actuated reference model
+│   ├── Model_under2.slx                # Alternative underactuated configuration model
+│   └── run_dipc_simulation.m           # Script to configure parameters and run Simulink model to produce Sim1.mat
+│
+└── paper/                              # Paper manuscript, LaTeX sources, figures, and tables
+    ├── main.tex                        # Full paper LaTeX source (IEEE Transactions style)
+    ├── references.bib                  # BibTeX references
+    ├── IEEEtran.cls                    # Document class file
+    ├── main.pdf                        # Compiled publication PDF
+    ├── figures/                        # All 8 publication figures (.pdf vector & .png 300 DPI)
+    └── tables/                         # Auto-generated LaTeX benchmark comparison tables
+```
+
+---
+
+## ⚙️ Prerequisites & Dependencies
+
+- **MATLAB:** R2022b or later (tested up to R2026a).
+- **Toolboxes:**
+  - Optimization Toolbox (optional, if using MATLAB solvers)
+  - Simulink & Simscape Multibody (only required if re-simulating `.slx` models from scratch)
+- **CasADi:** Version 3.5.5 or later (tested on CasADi v3.8+).
+  - Download from: [https://web.casadi.org/get/](https://web.casadi.org/get/)
+  - Add CasADi to your MATLAB path:
+    ```matlab
+    addpath('C:\path\to\casadi-matlab');
+    import casadi.*
+    ```
+- **Solvers:** IPOPT (bundled automatically with CasADi binary distributions).
+
+---
+
+## 🚀 Quick Start & How to Replicate All Results
+
+### 1. Instant Reproduction of All Publication Figures (No Re-Optimization Required)
+If you wish to immediately inspect and re-generate all 8 publication figures (vector `.pdf` and 300-DPI `.png`) using the pre-computed benchmark results stored in `data/identification_results.mat`:
+```matlab
+% In MATLAB command window:
+Generate_All_Figures
+```
+This generates:
+- `fig1_experimental_trajectories.pdf/.png`: Overview of RIFP 1 kHz trajectories ($q_1, q_2, \tau_1$).
+- `fig2_torque_tracking_comparison.pdf/.png`: Actuated joint dynamic torque tracking and reconstruction residuals.
+- `fig3_nullspace_collapse_demonstration.pdf/.png`: Normalized parameter recovery ratios and shrinking window stability ($T = 0.3\text{ s}$ to $2.0\text{ s}$).
+- `fig4_forward_simulation_validation.pdf/.png`: Multi-step forward RK4 dynamic simulation validation driven by experimental torque $\tau_1(t)$.
+- `fig5_physics_constraints_validation.pdf/.png`: Inertia matrix determinant $\det(D(\bm{q}(t))) > 0$ positive-definiteness certification.
+- `fig6_friction_characteristic_curves.pdf/.png`: Identified symmetric and asymmetric regularized nonlinear joint friction curves.
+- `fig_dipc_nullspace.pdf/.png`: Subsystem-grouped relative parameter estimation error across the 3-DOF DIPC under measurement noise ($\sigma = 0.05$).
+- `fig_dipc_tracking.pdf/.png`: DIPC forward dynamic simulation trajectories ($d_1, \theta_2, \theta_3, F_1$).
+
+---
+
+### 2. Full End-to-End Pipeline Execution
+To execute all identification algorithms, solvers, and simulations from scratch:
+```matlab
+% In MATLAB command window:
+main_identification
+```
+This master script automatically:
+1. Runs **Benchmark 1 (3-DOF DIPC)**:
+   - Ingests `data/Sim1.mat` ($N = 2,000$ samples @ $1\text{ kHz}$).
+   - Injects Gaussian measurement noise ($\sigma_{\text{true}} = 0.05\text{ N}$, $\sigma^2_{\text{true}} = 2.50 \times 10^{-3}\text{ N}^2$).
+   - Solves Direct OLS (U-LS), Filtered LS (UMF-LS), and the proposed Physics-Constrained estimator (PC-LS).
+   - Simulates forward dynamics (RK4) and exports `table4_dipc_comparison.tex`, `fig_dipc_nullspace`, and `fig_dipc_tracking`.
+2. Runs **Benchmark 2 (2-DOF RIFP Experimental Hardware)**:
+   - Ingests `data/furutadataexp.mat` ($N = 20,000$ samples @ $1\text{ kHz}$).
+   - Computes zero-phase Nuttall FIR filtering and central difference derivatives.
+   - Solves Decoupled LS (D-LS), Direct Unconstrained LS (U-LS), Direct PC-CasADi, Aguilar Filtered LS Baseline (UMF-LS), and Filter-Based Constrained LS (FBC-LS).
+   - Solves asymmetric nonlinear friction identification.
+   - Integrates forward RK4 dynamics over a $2.5\text{ s}$ validation window.
+   - Saves all variables into `data/identification_results.mat`.
+   - Exports `table1_parameters.tex`, `table2_performance_metrics.tex`, and Figures 1 through 6.
+
+---
+
+### 3. Running Individual Benchmarks Independently
+
+#### A. 3-DOF Underactuated DIPC Benchmark Only
+```matlab
+run_dipc_benchmark_standalone
+```
+
+#### B. 2-DOF Furuta Pendulum Experimental Benchmark Only
+```matlab
+run_furuta_benchmark_standalone
+```
+
+#### C. Re-running the DIPC Multi-Body Simulation in Simulink
+To re-generate the ground-truth simulation dataset (`data/Sim1.mat`) directly from the Simscape Multibody model under the multi-frequency excitation force $F_1(t) = 80 \sin(2\pi t) + 40 \cos(5\pi t)$:
+```matlab
+cd('simulink');
+run_dipc_simulation;
+cd('..');
+```
+
+#### D. Verifying Symbolic Mechanics and Denavit-Hartenberg Derivations
+To symbolically verify the Lagrangian equations of motion, Denavit-Hartenberg kinematic chains, and Coriolis skew-symmetry:
+```matlab
+% 3-DOF DIPC Symbolic Verification:
+cd('core');
+Cart_sys;
+
+% 2-DOF RIFP Symbolic & CasADi Verification:
+Furuta_sys;
+cd('..');
+```
+
+---
+
+## 📊 Summary of Benchmark Results
+
+### Benchmark 1: 3-DOF Underactuated DIPC under Measurement Noise ($\sigma_{\text{true}} = 0.05$, $\sigma^2_{\text{true}} = 2.50 \times 10^{-3}$)
+
+| Subsystem | Parameter | Expression | Ground Truth | U-LS | UMF-LS (Aguilar) | Proposed PC-LS | Rel. Error |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **Cart ($L_1$)** | $x_{1,1}$ | $m_1+m_2+m_3$ | $8.1000$ | $8.1031$ | $8.1045$ | **$8.0985$** | $0.02\%$ |
+| | $x_{1,2}$ | $-(a_2 m_3 + lc_2 m_2)$ | $-1.0125$ | $-1.0125$ | $-1.0127$ | **$-1.0125$** | $0.00\%$ |
+| | $x_{1,3}$ | $-lc_3 m_3$ | $-0.3375$ | $-0.3366$ | $-0.3363$ | **$-0.3375$** | $0.00\%$ |
+| | $x_{1,4}$ | $-lc_3 m_3$ | $-0.3375$ | $-0.3372$ | $-0.3372$ | **$-0.3375$** | $0.00\%$ |
+| | $x_{1,5}$ | $a_2 m_3 + lc_2 m_2$ | $1.0125$ | $1.0125$ | $1.0125$ | **$1.0125$** | $0.00\%$ |
+| | $x_{1,6}$ | $lc_3 m_3$ | $0.3375$ | $0.3375$ | $0.3376$ | **$0.3375$** | $0.00\%$ |
+| | $x_{1,7}$ | $2 lc_3 m_3$ | $0.6750$ | $0.6749$ | $0.6750$ | **$0.6750$** | $0.00\%$ |
+| | $x_{1,8}$ | $lc_3 m_3$ | $0.3375$ | $0.3375$ | $0.3375$ | **$0.3375$** | $0.00\%$ |
+| **Pendulum 1 ($L_2$)** | $x_{2,1}$ | $-(lc_2 m_2 + a_2 m_3)$ | $-1.0125$ | $0.0234^*$ | $0.0301^*$ | **$-1.0125$** | $0.00\%$ |
+| | $x_{2,2}$ | $-lc_3 m_3$ | $-0.3375$ | $-0.0293^*$ | $-0.0382^*$ | **$-0.3375$** | $0.00\%$ |
+| | $x_{2,3}$ | $I_{2zz}+I_{3zz}+a_2^2 m_3+lc_2^2 m_2+lc_3^2 m_3$ | $0.5631$ | $0.0004^*$ | $0.0000^*$ | **$0.5616$** | $0.26\%$ |
+| | $x_{2,4}$ | $2 a_2 lc_3 m_3$ | $0.3375$ | $-0.0003^*$ | $-0.0004^*$ | **$0.3366$** | $0.26\%$ |
+| | $x_{2,5}$ | $I_{3zz}+lc_3^2 m_3$ | $0.1128$ | $-0.0001^*$ | $-0.0002^*$ | **$0.1125$** | $0.25\%$ |
+| | $x_{2,6}$ | $a_2 lc_3 m_3$ | $0.1688$ | $0.0001^*$ | $0.0000^*$ | **$0.1683$** | $0.26\%$ |
+| | $x_{2,7}$ | $-a_2 lc_3 m_3$ | $-0.1688$ | $-0.0001^*$ | $0.0000^*$ | **$-0.1683$** | $0.26\%$ |
+| | $x_{2,8}$ | $-2 a_2 lc_3 m_3$ | $-0.3375$ | $0.0001^*$ | $0.0002^*$ | **$-0.3366$** | $0.26\%$ |
+| | $x_{2,9}$ | $g(lc_2 m_2 + a_2 m_3)$ | $-9.9292$ | $-0.0113^*$ | $-0.0044^*$ | **$-9.9055$** | $0.24\%$ |
+| | $x_{2,10}$ | $g lc_3 m_3$ | $-3.3097$ | $0.0062^*$ | $0.0079^*$ | **$-3.3019$** | $0.24\%$ |
+| **Pendulum 2 ($L_3$)** | $x_{3,1}$ | $-lc_3 m_3$ | $-0.3375$ | $-0.0065^*$ | $-0.0099^*$ | **$-0.3375$** | $0.00\%$ |
+| | $x_{3,2}$ | $I_{3zz}+lc_3^2 m_3$ | $0.1128$ | $0.0001^*$ | $0.0000^*$ | **$0.1125$** | $0.25\%$ |
+| | $x_{3,3}$ | $a_2 lc_3 m_3$ | $0.1688$ | $-0.0001^*$ | $-0.0001^*$ | **$0.1683$** | $0.26\%$ |
+| | $x_{3,4}$ | $I_{3zz}+lc_3^2 m_3$ | $0.1128$ | $-0.0000^*$ | $-0.0000^*$ | **$0.1125$** | $0.25\%$ |
+| | $x_{3,5}$ | $a_2 lc_3 m_3$ | $0.1688$ | $-0.0000^*$ | $-0.0001^*$ | **$0.1683$** | $0.26\%$ |
+| | $x_{3,6}$ | $g lc_3 m_3$ | $-3.3097$ | $0.0009^*$ | $0.0010^*$ | **$-3.3019$** | $0.24\%$ |
+| **Summary Metrics** | **Overall Param Error** | $\|\hat{\bm{\Theta}} - \bm{\Theta}^*\|_2 / \|\bm{\Theta}^*\|_2$ | --- | $80.01\%$ | $80.06\%$ | **$0.19\%$** | --- |
+| | **Link 2 Norm** | $\|\bm{\Theta}_{L2}\|_2$ (True: $10.5498$) | $10.5498$ | $0.0397^*$ | $0.0494^*$ | **$10.5248$** | $0.24\%$ |
+| | **Link 3 Norm** | $\|\bm{\Theta}_{L3}\|_2$ (True: $3.3393$) | $3.3393$ | $0.0066^*$ | $0.0099^*$ | **$3.3314$** | $0.24\%$ |
+| | **Noise Variance $\hat{\sigma}^2$** | $\times 10^{-3}\text{ N}^2$ (True: $2.50$) | $2.5000$ | $2.5282$ | $2.5295$ | **$2.5339$** | $1.36\%$ |
+| | **Simulation RMSE** | $d_1\text{ (m)} / \theta_2\text{ (rad)} / \theta_3\text{ (rad)}$ | --- | Diverged | Diverged | **$0.0195 / 0.1723 / 0.1801$** | --- |
+
+*\*Indicates numerical null-space parameter collapse ($>99.5\%$ loss of parameter norm).*
+
+---
+
+### Benchmark 2: 2-DOF Rotary Furuta Pendulum (RIFP Experimental Hardware Data)
+
+| Parameter | Physical Description | Units | D-LS | U-LS | UMF-LS (Aguilar) | FBC-LS (Proposed) |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| $\theta_1$ | Arm Base Inertia | $\text{kg}\cdot\text{m}^2$ | $0.0475$ | $0.0467$ | $0.0604$ | **$0.0604$** |
+| $\theta_2$ | Pendulum Coupled Inertia | $\text{kg}\cdot\text{m}^2$ | $0.0144$ | $0.0135$ | $0.0148$ | **$0.0148$** |
+| $\theta_3$ | Mutual Cross Inertia | $\text{kg}\cdot\text{m}^2$ | $0.0141$ | $0.0124$ | $0.0179$ | **$0.0179$** |
+| $\theta_4$ | Pendulum Inertia | $\text{kg}\cdot\text{m}^2$ | $0.0000^*$ | $0.0075$ | $0.0126$ | **$0.0126$** |
+| $\theta_5$ | Gravitational Moment ($m_2 g l_2$) | $\text{N}\cdot\text{m}$ | $0.0000^*$ | $0.3117$ | $0.4878$ | **$0.4878$** |
+| $f_{v1}$ | Arm Viscous Friction | $\text{N}\cdot\text{m}\cdot\text{s/rad}$ | $0.0145$ | $0.0163$ | $0.0090$ | **$0.0090$** |
+| $f_{v2}$ | Pendulum Viscous Friction | $\text{N}\cdot\text{m}\cdot\text{s/rad}$ | $0.0000^*$ | $0.0014$ | $0.0006$ | **$0.0006$** |
+| $f_{c1}$ | Arm Coulomb Stiction | $\text{N}\cdot\text{m}$ | $0.0097$ | $0.0074$ | $0.0181$ | **$0.0181$** |
+| $f_{c2}$ | Pendulum Coulomb Stiction | $\text{N}\cdot\text{m}$ | $0.0000^*$ | $0.0041$ | $0.0086$ | **$0.0086$** |
+
+---
+
+### Robustness Under Shrinking Observation Horizons ($T = 0.3\text{ s}$ to $2.0\text{ s}$)
+
+| Window $N$ | Duration $T$ (s) | Method | $\min \det(D)\text{ (kg}^2\cdot\text{m}^4)$ | $\theta_4\text{ (kg}\cdot\text{m}^2)$ | $f_{v1}\text{ (N}\cdot\text{m}\cdot\text{s/rad)}$ | Sim RMSE $q_2$ (rad) |
+| :---: | :---: | :--- | :---: | :---: | :---: | :---: |
+| **$300$** | **$0.3$** | UMF-LS | $-1.17 \times 10^{-5}$ *(Indefinite)* | $-0.0028$ *(Negative)* | $-0.0312$ *(Energy Gen)* | **Diverged** |
+| | | **FBC-LS (Proposed)** | $\mathbf{+1.00 \times 10^{-4}}$ | $\mathbf{+0.0039}$ | $\mathbf{+0.0000}$ | $\mathbf{0.0784}$ |
+| **$500$** | **$0.5$** | UMF-LS | $-3.67 \times 10^{-5}$ *(Indefinite)* | $-0.0043$ *(Negative)* | $-0.0561$ *(Energy Gen)* | $0.9377\text{ }(53.7^\circ)$ |
+| | | **FBC-LS (Proposed)** | $\mathbf{+1.00 \times 10^{-4}}$ | $\mathbf{+0.0044}$ | $\mathbf{+0.0000}$ | $\mathbf{0.0617}\text{ }(3.5^\circ)$ |
+| **$800$** | **$0.8$** | UMF-LS | $+1.68 \times 10^{-4}$ | $+0.0089$ | $-0.0124$ *(Energy Gen)* | $0.2140$ |
+| | | **FBC-LS (Proposed)** | $\mathbf{+2.93 \times 10^{-4}}$ | $\mathbf{+0.0112}$ | $\mathbf{+0.0042}$ | $\mathbf{0.0381}$ |
+| **$1000$** | **$1.0$** | UMF-LS | $+1.85 \times 10^{-4}$ | $+0.0094$ | $-0.0068$ *(Energy Gen)* | $0.1852$ |
+| | | **FBC-LS (Proposed)** | $\mathbf{+3.45 \times 10^{-4}}$ | $\mathbf{+0.0118}$ | $\mathbf{+0.0065}$ | $\mathbf{0.0246}$ |
+| **$2000$** | **$2.0$** | UMF-LS | $+4.06 \times 10^{-4}$ | $+0.0121$ | $+0.0082$ | $0.0152$ |
+| | | **FBC-LS (Proposed)** | $\mathbf{+4.06 \times 10^{-4}}$ | $\mathbf{+0.0124}$ | $\mathbf{+0.0088}$ | $\mathbf{0.0114}$ |
+
+---
+
+## 🔬 Mathematical Formulations
+
+### 1. Partitioned Underactuated Dynamics
+$$\begin{bmatrix} D_{aa}(\bm{q}) & D_{au}(\bm{q}) \\ D_{ua}(\bm{q}) & D_{uu}(\bm{q}) \end{bmatrix} \begin{bmatrix} \ddot{\bm{q}}_a \\ \ddot{\bm{q}}_u \end{bmatrix} + \begin{bmatrix} \bm{h}_a(\bm{q}, \dot{\bm{q}}) \\ \bm{h}_u(\bm{q}, \dot{\bm{q}}) \end{bmatrix} = \begin{bmatrix} \bm{\tau}_a \\ \mathbf{0} \end{bmatrix}$$
+
+### 2. Linear Condensed Optimization Problem
+$$\min_{\bm{\Theta}} \quad \frac{d N}{2} \ln \left( \bm{\Theta}^T H \bm{\Theta} - 2 \bm{g}^T \bm{\Theta} + c \right)$$
+$$\text{subject to} \quad A_{\mathrm{sym}} \bm{\Theta} = \mathbf{0}, \quad A_{\mathrm{skew}} \bm{\Theta} = \mathbf{0}$$
+$$\Delta_k(D(\bm{q}^{(j)}; \bm{\Theta})) \ge \epsilon_p, \quad k = 1, \dots, n, \quad j = 1, \dots, N_c$$
+$$\bm{\Theta}_{\mathrm{dyn}} \ge \mathbf{0}, \quad \bm{\Theta}_{\mathrm{fric}} \ge \mathbf{0}$$
+
+Where $H = W^T W$, $\bm{g} = W^T \bm{\Gamma}$, and $c = \bm{\Gamma}^T \bm{\Gamma}$ are constant BLAS sufficient statistics.
+
+---
+
+## 📖 Citation
+
+If you use this codebase or benchmark data in your research, please cite our paper:
+
+```bibtex
+@article{asker2026physics,
+  title={Physics-Constrained Dynamic Identification and Noise Estimation for Underactuated Systems},
+  author={Asker, Ahmed and Co-Authors},
+  journal={IEEE Transactions on Robotics},
+  volume={XX},
+  number={X},
+  pages={1--16},
+  year={2026},
+  publisher={IEEE}
+}
+```
+
+---
+
+## 📄 License
+This repository is released under the [MIT License](LICENSE).

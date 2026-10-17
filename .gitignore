@@ -1,0 +1,31 @@
+# MATLAB files
+*.asv
+*.m~
+*.slxc
+*.autosave
+*.mex*
+slprj/
+sfcndir/
+_codegen/
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.synctex.gz(busy)
+*.synctex.gz.sum.synctex
+*.toc
+*.fls
+*.fdb_latexmk
+
+# Windows / OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary scratch files
+*.tmp
+*.bak
