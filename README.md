@@ -37,8 +37,6 @@ This repository provides an end-to-end **Physics-Constrained Identification Fram
 
 ## 🗂 Repository Structure
 
-## 🗂 Repository Structure
-
 ```
 CasADi Underactuated System Identification/
 ├── README.md                           # Documentation, replication instructions, benchmark tables
@@ -88,6 +86,8 @@ CasADi Underactuated System Identification/
     ├── figures/                        # All 8 publication figures (.pdf vector & .png 300 DPI)
     └── tables/                         # Auto-generated LaTeX benchmark comparison tables
 ```
+
+---
 
 ---
 
