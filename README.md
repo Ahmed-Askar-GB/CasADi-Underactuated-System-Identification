@@ -17,23 +17,25 @@ $^{*}$ *Corresponding author: ahmed.asker@ejust.edu.eg*
 
 ## 📌 Overview
 
-Dynamic parameter identification of **underactuated mechanical systems** (systems with fewer independent control actuators than generalized degrees of freedom) is an inherently ill-posed problem. Because passive, unactuated joints receive **zero external actuation force or torque** ($\bm{\tau}_u \equiv \mathbf{0}$), their corresponding regression sub-problems are strictly homogeneous:
+Dynamic parameter identification of **underactuated mechanical systems** (systems with fewer independent control actuators than generalized degrees of freedom) is an inherently ill-posed problem. Because passive, unactuated joints receive **zero external actuation force or torque** ($\boldsymbol{\tau}_u \equiv \mathbf{0}$), their corresponding regression sub-problems are strictly homogeneous:
 
-$$W_u(\bm{q}, \dot{\bm{q}}, \ddot{\bm{q}}) \bm{\Theta}_u \approx \mathbf{0}$$
+$$W_u(\boldsymbol{q}, \dot{\boldsymbol{q}}, \ddot{\boldsymbol{q}}) \boldsymbol{\Theta}_u \approx \mathbf{0}$$
 
-Under measurement noise, encoder quantization, or numerical acceleration differentiation errors, unconstrained least-squares estimators trivially minimize algebraic residuals by driving passive parameters toward zero ($\bm{\Theta}_u \to \mathbf{0}$). This results in **numerical null-space collapse** ($>99\%$ loss of estimated mass and inertia), negative mass matrices violating positive definiteness ($D(\bm{q}) \nsucc 0$), and immediate divergence during forward dynamic integration.
+Under measurement noise, encoder quantization, or numerical acceleration differentiation errors, unconstrained least-squares estimators trivially minimize algebraic residuals by driving passive parameters toward zero ($\boldsymbol{\Theta}_u \to \mathbf{0}$). This results in **numerical null-space collapse** ($>99\%$ loss of estimated mass and inertia), negative mass matrices violating positive definiteness ($D(\boldsymbol{q}) \nsucc 0$), and immediate divergence during forward dynamic integration.
 
 While classical **Unconstrained Momentum-Filtered Least Squares (UMF-LS)** bypasses numerical acceleration differentiation through generalized momentum filtering, it remains an unconstrained linear transformation that does not prevent parameter collapse under noise.
 
 This repository provides an end-to-end **Physics-Constrained Identification Framework** based on algorithmic differentiation over computational Directed Acyclic Graphs (DAGs) in **CasADi**:
-1. **Automated Physical Constraint Extraction:** Automatic derivation of minimal linear symmetry ($A_{\mathrm{sym}} \bm{\Theta} = \mathbf{0}$) and passivity skew-symmetry ($A_{\mathrm{skew}} \bm{\Theta} = \mathbf{0}$) constraints via algorithmic differentiation and SVD/QR factorization, Sylvester principal minor positive-definiteness constraints ($\Delta_k(D(\bm{q})) \ge \epsilon_p > 0$), and sector-bounded physical parameter constraints ($\bm{\Theta} \in \mathcal{B}_{\mathrm{phys}}$).
+1. **Automated Physical Constraint Extraction:** Automatic derivation of minimal linear symmetry ($A_{\mathrm{sym}} \boldsymbol{\Theta} = \mathbf{0}$) and passivity skew-symmetry ($A_{\mathrm{skew}} \boldsymbol{\Theta} = \mathbf{0}$) constraints via algorithmic differentiation and SVD/QR factorization, Sylvester principal minor positive-definiteness constraints ($\Delta_k(D(\boldsymbol{q})) \ge \epsilon_p > 0$), and sector-bounded physical parameter constraints ($\boldsymbol{\Theta} \in \mathcal{B}_{\mathrm{phys}}$).
 2. **Joint Profile Maximum Likelihood Estimation (MLE):** Simultaneous identification of dynamic/friction parameters and statistical equation-error residual variance ($\hat{\sigma}^2$) to parameterize downstream Kalman filter process disturbance covariances ($Q_\tau = \hat{\sigma}^2 I$) and state observers.
-3. **Normal-Equation Condensation:** Condensation of 40,000+ temporal observation rows into compact Gram matrix sufficient statistics ($H = W^T W$, $\bm{g} = W^T \bm{\Gamma}$), cutting interior-point solve times from $6.44\text{ s}$ to **$13\text{ ms}$** (**$488.7\times$ speedup**).
+3. **Normal-Equation Condensation:** Condensation of 40,000+ temporal observation rows into compact Gram matrix sufficient statistics ($H = W^T W$, $\boldsymbol{g} = W^T \boldsymbol{\Gamma}$), cutting interior-point solve times from $6.44\text{ s}$ to **$13\text{ ms}$** (**$488.7\times$ speedup**).
 4. **Comprehensive Benchmarking on Simulation & Experimental Data:**
    - **3-DOF Double Inverted Pendulum on a Cart (DIPC):** High-fidelity multi-body Simscape simulation under controlled stochastic measurement noise ($\sigma_{\text{true}} = 0.05\text{ N}$).
    - **2-DOF Rotary Inverted Furuta Pendulum (RIFP):** Experimental hardware dataset ($20,000$ empirical data samples at $1\text{ kHz}$) evaluated under full-length ($20\text{ s}$) and truncated sliding observation horizons ($0.3\text{ s} - 2.0\text{ s}$).
 
 ---
+
+## 🗂 Repository Structure
 
 ## 🗂 Repository Structure
 
