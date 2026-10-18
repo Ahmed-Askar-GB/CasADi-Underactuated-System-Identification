@@ -277,40 +277,25 @@ This asymmetric formulation captures subtle directional variations while retaini
 
 ### 1. Partitioned Underactuated Dynamics
 
-Mechanical systems with $n$ generalized coordinates and $m<n$ independent control actuators can be partitioned into actuated coordinates, $\boldsymbol{q}_a \in \mathbb{R}^{m}$, and unactuated coordinates, $\boldsymbol{q}_u \in \mathbb{R}^{\,n-m}$:
+Mechanical systems with $n$ generalized coordinates and $m<n$ independent control actuators can be partitioned into actuated coordinates $\mathbf{q}_a \in \mathbb{R}^{m}$ and unactuated coordinates $\mathbf{q}_u \in \mathbb{R}^{n-m}$.
 
 $$
-\begin{bmatrix}
-D_{aa}(\boldsymbol{q}) & D_{au}(\boldsymbol{q}) \\
-D_{ua}(\boldsymbol{q}) & D_{uu}(\boldsymbol{q})
-\end{bmatrix}
-\begin{bmatrix}
-\ddot{\boldsymbol{q}}_a \\
-\ddot{\boldsymbol{q}}_u
-\end{bmatrix}
-+
-\begin{bmatrix}
-\boldsymbol{C}_{aa}\dot{\boldsymbol{q}}_a + \boldsymbol{C}_{au}\dot{\boldsymbol{q}}_u \\
-\boldsymbol{C}_{ua}\dot{\boldsymbol{q}}_a + \boldsymbol{C}_{uu}\dot{\boldsymbol{q}}_u
-\end{bmatrix}
-+
-\begin{bmatrix}
-\boldsymbol{g}_a(\boldsymbol{q}) \\
-\boldsymbol{g}_u(\boldsymbol{q})
-\end{bmatrix}
-+
-\begin{bmatrix}
-\boldsymbol{\tau}_{fa}(\dot{\boldsymbol{q}}_a) \\
-\boldsymbol{\tau}_{fu}(\dot{\boldsymbol{q}}_u)
-\end{bmatrix}
+D(\mathbf{q})\ddot{\mathbf{q}}
++ C(\mathbf{q},\dot{\mathbf{q}})\dot{\mathbf{q}}
++ g(\mathbf{q})
++ \tau_f(\dot{\mathbf{q}})
 =
 \begin{bmatrix}
-\boldsymbol{\tau}_a \\
+\boldsymbol{\tau}_a\\
 \mathbf{0}
 \end{bmatrix}.
 $$
 
-Since the unactuated coordinates are not directly driven by control inputs ($\boldsymbol{\tau}_u \equiv \mathbf{0}$), the corresponding inverse-dynamics relation yields a homogeneous identification equation,
+Since the unactuated coordinates are not directly driven by control inputs ($\boldsymbol{\tau}_u \equiv \mathbf{0}$), the corresponding inverse-dynamics relation yields a homogeneous identification equation
+
+$$
+W_u(\mathbf{q},\dot{\mathbf{q}},\ddot{\mathbf{q}})\Theta \approx 0.
+$$
 
 $$
 W_u(\boldsymbol{q},\dot{\boldsymbol{q}},\ddot{\boldsymbol{q}})\,\boldsymbol{\Theta}
