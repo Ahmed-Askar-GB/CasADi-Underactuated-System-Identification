@@ -275,8 +275,6 @@ This asymmetric formulation captures subtle directional variations while retaini
 | | | **FBC-LS (Proposed)** | $\mathbf{+4.06 \times 10^{-4}}$ | $\mathbf{+0.0124}$ | $\mathbf{+0.0088}$ | $\mathbf{0.0114}$ |
 ---
 
-## 🔬 Mathematical Formulations
-
 ### 1. Partitioned Underactuated Dynamics
 Mechanical systems with $n$ generalized coordinates and $m < n$ independent control actuators partition into actuated ($\boldsymbol{q}_a \in \mathbb{R}^m$) and unactuated ($\boldsymbol{q}_u \in \mathbb{R}^{n-m}$) coordinates:
 
@@ -312,6 +310,7 @@ D_{ua}(\boldsymbol{q}) & D_{uu}(\boldsymbol{q})
 $$
 
 Because unactuated coordinates receive zero generalized control forces ($\boldsymbol{\tau}_u \equiv \mathbf{0}$), their identification equation is strictly homogeneous ($W_u \boldsymbol{\Theta} \approx \mathbf{0}$).
+
 
 ### 2. Algorithmic Differentiation & Minimal Constraint Extraction via SVD/QR
 To eliminate polynomial explosion in symbolic computer algebra systems, the framework builds computational Directed Acyclic Graphs (DAGs) in CasADi and extracts exact constraint matrices automatically:
