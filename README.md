@@ -276,7 +276,8 @@ This asymmetric formulation captures subtle directional variations while retaini
 ## 🔬 Mathematical Formulations
 
 ### 1. Partitioned Underactuated Dynamics
-Mechanical systems with $n$ generalized coordinates and $m < n$ independent control actuators partition into actuated ($\boldsymbol{q}_a \in \mathbb{R}^m$) and unactuated ($\boldsymbol{q}_u \in \mathbb{R}^{n-m}$) coordinates:
+
+Mechanical systems with $n$ generalized coordinates and $m<n$ independent control actuators can be partitioned into actuated coordinates, $\boldsymbol{q}_a \in \mathbb{R}^{m}$, and unactuated coordinates, $\boldsymbol{q}_u \in \mathbb{R}^{\,n-m}$:
 
 $$
 \begin{bmatrix}
@@ -306,10 +307,17 @@ D_{ua}(\boldsymbol{q}) & D_{uu}(\boldsymbol{q})
 \begin{bmatrix}
 \boldsymbol{\tau}_a \\
 \mathbf{0}
-\end{bmatrix}
+\end{bmatrix}.
 $$
 
-Because unactuated coordinates receive zero generalized control forces ($\boldsymbol{\tau}_u \equiv \mathbf{0}$), their identification equation is strictly homogeneous ($W_u \boldsymbol{\Theta} \approx \mathbf{0}$).
+Since the unactuated coordinates are not directly driven by control inputs ($\boldsymbol{\tau}_u \equiv \mathbf{0}$), the corresponding inverse-dynamics relation yields a homogeneous identification equation,
+
+$$
+W_u(\boldsymbol{q},\dot{\boldsymbol{q}},\ddot{\boldsymbol{q}})\,\boldsymbol{\Theta}
+\approx \mathbf{0},
+$$
+
+which forms the basis of the proposed parameter estimation framework.
 
 
 ### 2. Algorithmic Differentiation & Minimal Constraint Extraction via SVD/QR
