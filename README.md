@@ -89,8 +89,6 @@ CasADi Underactuated System Identification/
 
 ---
 
----
-
 ## ⚙️ Prerequisites & Dependencies
 
 - **MATLAB:** R2022b or later (tested up to R2026a).
@@ -274,6 +272,8 @@ This asymmetric formulation captures subtle directional variations while retaini
 | **$2000$** | **$2.0$** | UMF-LS | $+4.06 \times 10^{-4}$ | $+0.0121$ | $+0.0082$ | $0.0152$ |
 | | | **FBC-LS (Proposed)** | $\mathbf{+4.06 \times 10^{-4}}$ | $\mathbf{+0.0124}$ | $\mathbf{+0.0088}$ | $\mathbf{0.0114}$ |
 ---
+
+## 🔬 Mathematical Formulations
 
 ### 1. Partitioned Underactuated Dynamics
 Mechanical systems with $n$ generalized coordinates and $m < n$ independent control actuators partition into actuated ($\boldsymbol{q}_a \in \mathbb{R}^m$) and unactuated ($\boldsymbol{q}_u \in \mathbb{R}^{n-m}$) coordinates:
