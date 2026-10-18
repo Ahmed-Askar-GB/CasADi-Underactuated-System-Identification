@@ -348,7 +348,7 @@ $$
 where the physically admissible parameter set is defined as:
 
 $$
-\mathcal{B}_{\mathrm{phys}} = \left\{ \boldsymbol{\Theta} \colon \mathbf{S}_{\mathrm{pos}} \boldsymbol{\Theta}_{\mathrm{dyn}} \ge \mathbf{0}, \quad \boldsymbol{\Theta}_{\mathrm{fric}} \ge \mathbf{0}, \quad \boldsymbol{\Theta}_{\mathrm{sector}} \le \mathbf{0} \right\}
+\mathcal{B}_{\mathrm{phys}} = \boldsymbol{\Theta} \colon \mathbf{S}_{\mathrm{pos}} \boldsymbol{\Theta}_{\mathrm{dyn}} \ge \mathbf{0}, \quad \boldsymbol{\Theta}_{\mathrm{fric}} \ge \mathbf{0}, \quad \boldsymbol{\Theta}_{\mathrm{sector}} \le \mathbf{0} 
 $$
 
 Here, $S_{\text{pos}}$ selects strictly positive physical parameters (such as cart mass, link inertias, and friction coefficients), while admitting negative sector bounds for gravitational and geometric cross-terms (such as $x_{2,9}, x_{2,10}, x_{3,6} \le 0$ on the DIPC).
