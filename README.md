@@ -7,11 +7,11 @@
 
 Official MATLAB/Simulink and CasADi implementation for the paper:  
 **"Physics-Constrained Dynamic Identification and Noise Estimation for Underactuated Systems"**  
-**Ahmed Asker** $^{1,2,*}$, **Omar Salah** $^{3}$, and **Haitham El-Hussieny** $^{1}$  
-$^{1}$ *Department of Mechatronics and Robotics Engineering, Egypt-Japan University of Science and Technology (E-JUST), New Borg El-Arab City, Alexandria 21934, Egypt*  
-$^{2}$ *Department of Production Engineering and Mechanical Design, Faculty of Engineering, Mansoura University, Mansoura 35516, Egypt*  
-$^{3}$ *Mechatronics Engineering Department, Faculty of Engineering, Assiut University, Assiut 71516, Egypt*  
-$^{*}$ *Corresponding author: ahmed.asker@ejust.edu.eg*
+**Ahmed Asker** <sup>1,2,*</sup>, **Omar Salah** <sup>3</sup>, and **Haitham El-Hussieny** <sup>1</sup>  
+<sup>1</sup> *Department of Mechatronics and Robotics Engineering, Egypt-Japan University of Science and Technology (E-JUST), New Borg El-Arab City, Alexandria 21934, Egypt*  
+<sup>2</sup> *Department of Production Engineering and Mechanical Design, Faculty of Engineering, Mansoura University, Mansoura 35516, Egypt*  
+<sup>3</sup> *Mechatronics Engineering Department, Faculty of Engineering, Assiut University, Assiut 71516, Egypt*  
+<sup>*</sup> *Corresponding author: ahmed.asker@ejust.edu.eg*
 
 ---
 
@@ -19,7 +19,9 @@ $^{*}$ *Corresponding author: ahmed.asker@ejust.edu.eg*
 
 Dynamic parameter identification of **underactuated mechanical systems** (systems with fewer independent control actuators than generalized degrees of freedom) is an inherently ill-posed problem. Because passive, unactuated joints receive **zero external actuation force or torque** ($\boldsymbol{\tau}_u \equiv \mathbf{0}$), their corresponding regression sub-problems are strictly homogeneous:
 
-$$W_u(\boldsymbol{q}, \dot{\boldsymbol{q}}, \ddot{\boldsymbol{q}}) \boldsymbol{\Theta}_u \approx \mathbf{0}$$
+$$
+W_u(\boldsymbol{q}, \dot{\boldsymbol{q}}, \ddot{\boldsymbol{q}}) \boldsymbol{\Theta}_u \approx \mathbf{0}
+$$
 
 Under measurement noise, encoder quantization, or numerical acceleration differentiation errors, unconstrained least-squares estimators trivially minimize algebraic residuals by driving passive parameters toward zero ($\boldsymbol{\Theta}_u \to \mathbf{0}$). This results in **numerical null-space collapse** ($>99\%$ loss of estimated mass and inertia), negative mass matrices violating positive definiteness ($D(\boldsymbol{q}) \nsucc 0$), and immediate divergence during forward dynamic integration.
 
@@ -189,37 +191,37 @@ cd('..');
 
 | Subsystem | Parameter | Expression | Ground Truth | U-LS | UMF-LS (Aguilar) | Proposed PC-LS | Rel. Error |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Cart ($L_1$)** | $x_{1,1}$ | $m_1+m_2+m_3$ | $8.1000$ | $8.1031$ | $8.1045$ | **$8.0985$** | $0.02\%$ |
-| | $x_{1,2}$ | $-(a_2 m_3 + lc_2 m_2)$ | $-1.0125$ | $-1.0125$ | $-1.0127$ | **$-1.0125$** | $0.00\%$ |
-| | $x_{1,3}$ | $-lc_3 m_3$ | $-0.3375$ | $-0.3366$ | $-0.3363$ | **$-0.3375$** | $0.00\%$ |
-| | $x_{1,4}$ | $-lc_3 m_3$ | $-0.3375$ | $-0.3372$ | $-0.3372$ | **$-0.3375$** | $0.00\%$ |
-| | $x_{1,5}$ | $a_2 m_3 + lc_2 m_2$ | $1.0125$ | $1.0125$ | $1.0125$ | **$1.0125$** | $0.00\%$ |
-| | $x_{1,6}$ | $lc_3 m_3$ | $0.3375$ | $0.3375$ | $0.3376$ | **$0.3375$** | $0.00\%$ |
-| | $x_{1,7}$ | $2 lc_3 m_3$ | $0.6750$ | $0.6749$ | $0.6750$ | **$0.6750$** | $0.00\%$ |
-| | $x_{1,8}$ | $lc_3 m_3$ | $0.3375$ | $0.3375$ | $0.3375$ | **$0.3375$** | $0.00\%$ |
-| **Pendulum 1 ($L_2$)** | $x_{2,1}$ | $-(lc_2 m_2 + a_2 m_3)$ | $-1.0125$ | $0.0234^*$ | $0.0301^*$ | **$-1.0125$** | $0.00\%$ |
-| | $x_{2,2}$ | $-lc_3 m_3$ | $-0.3375$ | $-0.0293^*$ | $-0.0382^*$ | **$-0.3375$** | $0.00\%$ |
-| | $x_{2,3}$ | $I_{2zz}+I_{3zz}+a_2^2 m_3+lc_2^2 m_2+lc_3^2 m_3$ | $0.5631$ | $0.0004^*$ | $0.0000^*$ | **$0.5616$** | $0.26\%$ |
-| | $x_{2,4}$ | $2 a_2 lc_3 m_3$ | $0.3375$ | $-0.0003^*$ | $-0.0004^*$ | **$0.3366$** | $0.26\%$ |
-| | $x_{2,5}$ | $I_{3zz}+lc_3^2 m_3$ | $0.1128$ | $-0.0001^*$ | $-0.0002^*$ | **$0.1125$** | $0.25\%$ |
-| | $x_{2,6}$ | $a_2 lc_3 m_3$ | $0.1688$ | $0.0001^*$ | $0.0000^*$ | **$0.1683$** | $0.26\%$ |
-| | $x_{2,7}$ | $-a_2 lc_3 m_3$ | $-0.1688$ | $-0.0001^*$ | $0.0000^*$ | **$-0.1683$** | $0.26\%$ |
-| | $x_{2,8}$ | $-2 a_2 lc_3 m_3$ | $-0.3375$ | $0.0001^*$ | $0.0002^*$ | **$-0.3366$** | $0.26\%$ |
-| | $x_{2,9}$ | $g(lc_2 m_2 + a_2 m_3)$ | $-9.9292$ | $-0.0113^*$ | $-0.0044^*$ | **$-9.9055$** | $0.24\%$ |
-| | $x_{2,10}$ | $g lc_3 m_3$ | $-3.3097$ | $0.0062^*$ | $0.0079^*$ | **$-3.3019$** | $0.24\%$ |
-| **Pendulum 2 ($L_3$)** | $x_{3,1}$ | $-lc_3 m_3$ | $-0.3375$ | $-0.0065^*$ | $-0.0099^*$ | **$-0.3375$** | $0.00\%$ |
-| | $x_{3,2}$ | $I_{3zz}+lc_3^2 m_3$ | $0.1128$ | $0.0001^*$ | $0.0000^*$ | **$0.1125$** | $0.25\%$ |
-| | $x_{3,3}$ | $a_2 lc_3 m_3$ | $0.1688$ | $-0.0001^*$ | $-0.0001^*$ | **$0.1683$** | $0.26\%$ |
-| | $x_{3,4}$ | $I_{3zz}+lc_3^2 m_3$ | $0.1128$ | $-0.0000^*$ | $-0.0000^*$ | **$0.1125$** | $0.25\%$ |
-| | $x_{3,5}$ | $a_2 lc_3 m_3$ | $0.1688$ | $-0.0000^*$ | $-0.0001^*$ | **$0.1683$** | $0.26\%$ |
-| | $x_{3,6}$ | $g lc_3 m_3$ | $-3.3097$ | $0.0009^*$ | $0.0010^*$ | **$-3.3019$** | $0.24\%$ |
-| **Summary Metrics** | **Overall Param Error** | $\Vert\hat{\boldsymbol{\Theta}} - \boldsymbol{\Theta}^*\Vert_2 / \Vert\boldsymbol{\Theta}^*\Vert_2$ | --- | $80.01\%$ | $80.06\%$ | **$0.19\%$** | --- |
-| | **Link 2 Norm** | $\Vert\boldsymbol{\Theta}_{L2}\Vert_2$ (True: $10.5498$) | $10.5498$ | $0.0397^*$ | $0.0494^*$ | **$10.5248$** | $0.24\%$ |
-| | **Link 3 Norm** | $\Vert\boldsymbol{\Theta}_{L3}\Vert_2$ (True: $3.3393$) | $3.3393$ | $0.0066^*$ | $0.0099^*$ | **$3.3314$** | $0.24\%$ |
-| | **Noise Variance $\hat{\sigma}^2$** | $\times 10^{-3}\text{ N}^2$ (True: $2.50$) | $2.5000$ | $2.5282$ | $2.5295$ | **$2.5339$** | $1.36\%$ |
-| | **Simulation RMSE** | $d_1\text{ (m)} / \theta_2\text{ (rad)} / \theta_3\text{ (rad)}$ | --- | Diverged | Diverged | **$0.0195 / 0.1723 / 0.1801$** | --- |
+| **Cart ($L_1$)** | $x_{1,1}$ | $m_1+m_2+m_3$ | 8.1000 | 8.1031 | 8.1045 | **8.0985** | 0.02% |
+| | $x_{1,2}$ | $-(a_2 m_3 + lc_2 m_2)$ | -1.0125 | -1.0125 | -1.0127 | **-1.0125** | 0.00% |
+| | $x_{1,3}$ | $-lc_3 m_3$ | -0.3375 | -0.3366 | -0.3363 | **-0.3375** | 0.00% |
+| | $x_{1,4}$ | $-lc_3 m_3$ | -0.3375 | -0.3372 | -0.3372 | **-0.3375** | 0.00% |
+| | $x_{1,5}$ | $a_2 m_3 + lc_2 m_2$ | 1.0125 | 1.0125 | 1.0125 | **1.0125** | 0.00% |
+| | $x_{1,6}$ | $lc_3 m_3$ | 0.3375 | 0.3375 | 0.3376 | **0.3375** | 0.00% |
+| | $x_{1,7}$ | $2 lc_3 m_3$ | 0.6750 | 0.6749 | 0.6750 | **0.6750** | 0.00% |
+| | $x_{1,8}$ | $lc_3 m_3$ | 0.3375 | 0.3375 | 0.3375 | **0.3375** | 0.00% |
+| **Pendulum 1 ($L_2$)** | $x_{2,1}$ | $-(lc_2 m_2 + a_2 m_3)$ | -1.0125 | 0.0234* | 0.0301* | **-1.0125** | 0.00% |
+| | $x_{2,2}$ | $-lc_3 m_3$ | -0.3375 | -0.0293* | -0.0382* | **-0.3375** | 0.00% |
+| | $x_{2,3}$ | $I_{2zz}+I_{3zz}+a_2^2 m_3+lc_2^2 m_2+lc_3^2 m_3$ | 0.5631 | 0.0004* | 0.0000* | **0.5616** | 0.26% |
+| | $x_{2,4}$ | $2 a_2 lc_3 m_3$ | 0.3375 | -0.0003* | -0.0004* | **0.3366** | 0.26% |
+| | $x_{2,5}$ | $I_{3zz}+lc_3^2 m_3$ | 0.1128 | -0.0001* | -0.0002* | **0.1125** | 0.25% |
+| | $x_{2,6}$ | $a_2 lc_3 m_3$ | 0.1688 | 0.0001* | 0.0000* | **0.1683** | 0.26% |
+| | $x_{2,7}$ | $-a_2 lc_3 m_3$ | -0.1688 | -0.0001* | 0.0000* | **-0.1683** | 0.26% |
+| | $x_{2,8}$ | $-2 a_2 lc_3 m_3$ | -0.3375 | 0.0001* | 0.0002* | **-0.3366** | 0.26% |
+| | $x_{2,9}$ | $g(lc_2 m_2 + a_2 m_3)$ | -9.9292 | -0.0113* | -0.0044* | **-9.9055** | 0.24% |
+| | $x_{2,10}$ | $g lc_3 m_3$ | -3.3097 | 0.0062* | 0.0079* | **-3.3019** | 0.24% |
+| **Pendulum 2 ($L_3$)** | $x_{3,1}$ | $-lc_3 m_3$ | -0.3375 | -0.0065* | -0.0099* | **-0.3375** | 0.00% |
+| | $x_{3,2}$ | $I_{3zz}+lc_3^2 m_3$ | 0.1128 | 0.0001* | 0.0000* | **0.1125** | 0.25% |
+| | $x_{3,3}$ | $a_2 lc_3 m_3$ | 0.1688 | -0.0001* | -0.0001* | **0.1683** | 0.26% |
+| | $x_{3,4}$ | $I_{3zz}+lc_3^2 m_3$ | 0.1128 | -0.0000* | -0.0000* | **0.1125** | 0.25% |
+| | $x_{3,5}$ | $a_2 lc_3 m_3$ | 0.1688 | -0.0000* | -0.0001* | **0.1683** | 0.26% |
+| | $x_{3,6}$ | $g lc_3 m_3$ | -3.3097 | 0.0009* | 0.0010* | **-3.3019** | 0.24% |
+| **Summary Metrics** | **Overall Param Error** | $\Vert\hat{\boldsymbol{\Theta}} - \boldsymbol{\Theta}^*\Vert_2 / \Vert\boldsymbol{\Theta}^*\Vert_2$ | --- | 80.01% | 80.06% | **0.19%** | --- |
+| | **Link 2 Norm** | $\Vert\boldsymbol{\Theta}_{L2}\Vert_2$ (True: 10.5498) | 10.5498 | 0.0397* | 0.0494* | **10.5248** | 0.24% |
+| | **Link 3 Norm** | $\Vert\boldsymbol{\Theta}_{L3}\Vert_2$ (True: 3.3393) | 3.3393 | 0.0066* | 0.0099* | **3.3314** | 0.24% |
+| | **Noise Variance $\hat{\sigma}^2$** | $\times 10^{-3}\text{ N}^2$ (True: 2.50) | 2.5000 | 2.5282 | 2.5295 | **2.5339** | 1.36% |
+| | **Simulation RMSE** | $d_1\text{ (m)} / \theta_2\text{ (rad)} / \theta_3\text{ (rad)}$ | --- | Diverged | Diverged | **0.0195 / 0.1723 / 0.1801** | --- |
 
-*\*Indicates numerical null-space parameter collapse ($>99.5\%$ loss of parameter norm).*
+*\* Indicates numerical null-space parameter collapse (>99.5% loss of parameter norm).*
 
 > [!NOTE]
 > **Unreduced Block-Diagonal Regressor Rationale:**  
@@ -231,15 +233,17 @@ cd('..');
 
 | Parameter | Physical Description | Units | D-LS | U-LS | UMF-LS (Aguilar) | FBC-LS (Proposed) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| $\theta_1$ | Arm Base Inertia | $\text{kg}\cdot\text{m}^2$ | $0.0475$ | $0.0467$ | $0.0604$ | **$0.0604$** |
-| $\theta_2$ | Pendulum Coupled Inertia | $\text{kg}\cdot\text{m}^2$ | $0.0144$ | $0.0135$ | $0.0148$ | **$0.0148$** |
-| $\theta_3$ | Mutual Cross Inertia | $\text{kg}\cdot\text{m}^2$ | $0.0141$ | $0.0124$ | $0.0179$ | **$0.0179$** |
-| $\theta_4$ | Pendulum Inertia | $\text{kg}\cdot\text{m}^2$ | $0.0000^*$ | $0.0075$ | $0.0126$ | **$0.0126$** |
-| $\theta_5$ | Gravitational Moment ($m_2 g l_2$) | $\text{N}\cdot\text{m}$ | $0.0000^*$ | $0.3117$ | $0.4878$ | **$0.4878$** |
-| $f_{v1}$ | Arm Viscous Friction | $\text{N}\cdot\text{m}\cdot\text{s/rad}$ | $0.0145$ | $0.0163$ | $0.0090$ | **$0.0090$** |
-| $f_{v2}$ | Pendulum Viscous Friction | $\text{N}\cdot\text{m}\cdot\text{s/rad}$ | $0.0000^*$ | $0.0014$ | $0.0006$ | **$0.0006$** |
-| $f_{c1}$ | Arm Coulomb Stiction | $\text{N}\cdot\text{m}$ | $0.0097$ | $0.0074$ | $0.0181$ | **$0.0181$** |
-| $f_{c2}$ | Pendulum Coulomb Stiction | $\text{N}\cdot\text{m}$ | $0.0000^*$ | $0.0041$ | $0.0086$ | **$0.0086$** |
+| $\theta_1$ | Arm Base Inertia | $\text{kg}\cdot\text{m}^2$ | 0.0475 | 0.0467 | 0.0604 | **0.0604** |
+| $\theta_2$ | Pendulum Coupled Inertia | $\text{kg}\cdot\text{m}^2$ | 0.0144 | 0.0135 | 0.0148 | **0.0148** |
+| $\theta_3$ | Mutual Cross Inertia | $\text{kg}\cdot\text{m}^2$ | 0.0141 | 0.0124 | 0.0179 | **0.0179** |
+| $\theta_4$ | Pendulum Inertia | $\text{kg}\cdot\text{m}^2$ | 0.0000* | 0.0075 | 0.0126 | **0.0126** |
+| $\theta_5$ | Gravitational Moment ($m_2 g l_2$) | $\text{N}\cdot\text{m}$ | 0.0000* | 0.3117 | 0.4878 | **0.4878** |
+| $f_{v1}$ | Arm Viscous Friction | $\text{N}\cdot\text{m}\cdot\text{s/rad}$ | 0.0145 | 0.0163 | 0.0090 | **0.0090** |
+| $f_{v2}$ | Pendulum Viscous Friction | $\text{N}\cdot\text{m}\cdot\text{s/rad}$ | 0.0000* | 0.0014 | 0.0006 | **0.0006** |
+| $f_{c1}$ | Arm Coulomb Stiction | $\text{N}\cdot\text{m}$ | 0.0097 | 0.0074 | 0.0181 | **0.0181** |
+| $f_{c2}$ | Pendulum Coulomb Stiction | $\text{N}\cdot\text{m}$ | 0.0000* | 0.0041 | 0.0086 | **0.0086** |
+
+*\* Indicates numerical null-space parameter collapse.*
 
 > [!NOTE]
 > **Experimental Ground Truth:**  
@@ -261,52 +265,54 @@ This asymmetric formulation captures subtle directional variations while retaini
 
 | Window $N$ | Duration $T$ (s) | Method | $\min \det(D)\text{ (kg}^2\cdot\text{m}^4)$ | $\theta_4\text{ (kg}\cdot\text{m}^2)$ | $f_{v1}\text{ (N}\cdot\text{m}\cdot\text{s/rad)}$ | Sim RMSE $q_2$ (rad) |
 | :---: | :---: | :--- | :---: | :---: | :---: | :---: |
-| **$300$** | **$0.3$** | UMF-LS | $-1.17 \times 10^{-5}$ *(Indefinite)* | $-0.0028$ *(Negative)* | $-0.0312$ *(Energy Gen)* | **Diverged** |
-| | | **FBC-LS (Proposed)** | $\mathbf{+1.00 \times 10^{-4}}$ | $\mathbf{+0.0039}$ | $\mathbf{+0.0000}$ | $\mathbf{0.0784}$ |
-| **$500$** | **$0.5$** | UMF-LS | $-3.67 \times 10^{-5}$ *(Indefinite)* | $-0.0043$ *(Negative)* | $-0.0561$ *(Energy Gen)* | $0.9377\text{ }(53.7^\circ)$ |
-| | | **FBC-LS (Proposed)** | $\mathbf{+1.00 \times 10^{-4}}$ | $\mathbf{+0.0044}$ | $\mathbf{+0.0000}$ | $\mathbf{0.0617}\text{ }(3.5^\circ)$ |
-| **$800$** | **$0.8$** | UMF-LS | $+1.68 \times 10^{-4}$ | $+0.0089$ | $-0.0124$ *(Energy Gen)* | $0.2140$ |
-| | | **FBC-LS (Proposed)** | $\mathbf{+2.93 \times 10^{-4}}$ | $\mathbf{+0.0112}$ | $\mathbf{+0.0042}$ | $\mathbf{0.0381}$ |
-| **$1000$** | **$1.0$** | UMF-LS | $+1.85 \times 10^{-4}$ | $+0.0094$ | $-0.0068$ *(Energy Gen)* | $0.1852$ |
-| | | **FBC-LS (Proposed)** | $\mathbf{+3.45 \times 10^{-4}}$ | $\mathbf{+0.0118}$ | $\mathbf{+0.0065}$ | $\mathbf{0.0246}$ |
-| **$2000$** | **$2.0$** | UMF-LS | $+4.06 \times 10^{-4}$ | $+0.0121$ | $+0.0082$ | $0.0152$ |
-| | | **FBC-LS (Proposed)** | $\mathbf{+4.06 \times 10^{-4}}$ | $\mathbf{+0.0124}$ | $\mathbf{+0.0088}$ | $\mathbf{0.0114}$ |
+| **300** | **0.3** | UMF-LS | -1.17 &times; 10<sup>-5</sup> (Indefinite) | -0.0028 (Negative) | -0.0312 (Energy Gen) | **Diverged** |
+| | | **FBC-LS (Proposed)** | **+1.00 &times; 10<sup>-4</sup>** | **+0.0039** | **+0.0000** | **0.0784** |
+| **500** | **0.5** | UMF-LS | -3.67 &times; 10<sup>-5</sup> (Indefinite) | -0.0043 (Negative) | -0.0561 (Energy Gen) | 0.9377 (53.7°) |
+| | | **FBC-LS (Proposed)** | **+1.00 &times; 10<sup>-4</sup>** | **+0.0044** | **+0.0000** | **0.0617** (3.5°) |
+| **800** | **0.8** | UMF-LS | +1.68 &times; 10<sup>-4</sup> | +0.0089 | -0.0124 (Energy Gen) | 0.2140 |
+| | | **FBC-LS (Proposed)** | **+2.93 &times; 10<sup>-4</sup>** | **+0.0112** | **+0.0042** | **0.0381** |
+| **1000** | **1.0** | UMF-LS | +1.85 &times; 10<sup>-4</sup> | +0.0094 | -0.0068 (Energy Gen) | 0.1852 |
+| | | **FBC-LS (Proposed)** | **+3.45 &times; 10<sup>-4</sup>** | **+0.0118** | **+0.0065** | **0.0246** |
+| **2000** | **2.0** | UMF-LS | +4.06 &times; 10<sup>-4</sup> | +0.0121 | +0.0082 | 0.0152 |
+| | | **FBC-LS (Proposed)** | **+4.06 &times; 10<sup>-4</sup>** | **+0.0124** | **+0.0088** | **0.0114** |
+
 ---
 
 ## 🔬 Mathematical Formulations
 
 ### 1. Partitioned Underactuated Dynamics
 
-Mechanical systems with $n$ generalized coordinates and $m<n$ independent control actuators can be partitioned into actuated coordinates $\mathbf{q}_a \in \mathbb{R}^{m}$ and unactuated coordinates $\mathbf{q}_u \in \mathbb{R}^{n-m}$.
+Mechanical systems with $n$ generalized coordinates and $m < n$ independent control actuators can be partitioned into actuated coordinates $\boldsymbol{q}_a \in \mathbb{R}^{m}$ and unactuated coordinates $\boldsymbol{q}_u \in \mathbb{R}^{n-m}$:
 
 $$
-D(\mathbf{q})\ddot{\mathbf{q}}
-+ C(\mathbf{q},\dot{\mathbf{q}})\dot{\mathbf{q}}
-+ g(\mathbf{q})
-+ \tau_f(\dot{\mathbf{q}})
+D(\boldsymbol{q})\ddot{\boldsymbol{q}}
++ C(\boldsymbol{q},\dot{\boldsymbol{q}})\dot{\boldsymbol{q}}
++ \boldsymbol{g}(\boldsymbol{q})
++ \boldsymbol{\tau}_f(\dot{\boldsymbol{q}})
 =
 \begin{bmatrix}
 \boldsymbol{\tau}_a\\
 \mathbf{0}
-\end{bmatrix}.
+\end{bmatrix}
 $$
 
-Since the unactuated coordinates are not directly driven by control inputs ($\boldsymbol{\tau}_u \equiv \mathbf{0}$), the corresponding inverse-dynamics relation yields a homogeneous identification equation
+Since the unactuated coordinates receive zero external control input ($\boldsymbol{\tau}_u \equiv \mathbf{0}$), the corresponding inverse-dynamics relation yields the homogeneous identification equation:
 
-$$ W_u(\mathbf{q},\dot{\mathbf{q}},\ddot{\mathbf{q}})\Theta \approx 0. $$
-which forms the basis of the proposed parameter estimation framework.
+$$
+W_u(\boldsymbol{q}, \dot{\boldsymbol{q}}, \ddot{\boldsymbol{q}}) \boldsymbol{\Theta}_u \approx \mathbf{0}
+$$
+
+which forms the basis of the underactuated parameter estimation problem.
 
 ### 2. Algorithmic Differentiation & Minimal Constraint Extraction via SVD/QR
+
 To eliminate polynomial explosion in symbolic computer algebra systems, the framework builds computational Directed Acyclic Graphs (DAGs) in CasADi and extracts exact constraint matrices automatically:
-- **Linear Inertia Symmetry ($A_{\mathrm{sym}} \boldsymbol{\Theta} = \mathbf{0}$):** Evaluates row gradients:
-  $$
-  \boldsymbol{a}_{\mathrm{sym}, ij}^T = \frac{\partial \left( D_{ij}(\boldsymbol{q}) - D_{ji}(\boldsymbol{q}) \right)}{\partial \boldsymbol{\Theta}}
-  $$
-  across independent configurations on the state manifold and extracts the minimal linearly independent row space via Singular Value Decomposition (SVD) or rank-revealing QR factorization.
+- **Linear Inertia Symmetry ($A_{\mathrm{sym}} \boldsymbol{\Theta} = \mathbf{0}$):** Evaluates row gradients $\boldsymbol{a}_{\mathrm{sym}, ij}^T = \frac{\partial ( D_{ij}(\boldsymbol{q}) - D_{ji}(\boldsymbol{q}) )}{\partial \boldsymbol{\Theta}}$ across independent configurations on the state manifold and extracts the minimal linearly independent row space via Singular Value Decomposition (SVD) or rank-revealing QR factorization.
 - **Passivity Skew-Symmetry ($A_{\mathrm{skew}} \boldsymbol{\Theta} = \mathbf{0}$):** The fundamental physical passivity condition $\dot{\boldsymbol{q}}^T (\dot{D} - 2C) \dot{\boldsymbol{q}} = 0$ requires skew-symmetry $N(\boldsymbol{q}, \dot{\boldsymbol{q}}) = \dot{D} - 2C = -N^T$. The minimal constraint matrix $A_{\mathrm{skew}}$ is extracted by evaluating the row gradients of skew-symmetric pairs across test configurations and isolating the linearly independent basis via SVD/QR.
 - **Sylvester Principal-Minor Positive Definiteness ($\Delta_k(D(\boldsymbol{q})) \ge \epsilon_p$):** Strict positive definiteness $D(\boldsymbol{q}) \succ 0$ is enforced configuration-wise across the reachable operational envelope $\mathcal{Q}_{\text{reach}}$, ensuring well-conditioned numerical inversion throughout forward simulation and MPC without non-convex 10-parameter pseudo-inertia reconstructions.
 
 ### 3. Profile Maximum Likelihood Estimation & Equation-Error Residuals
+
 Assuming additive Gaussian measurement noise on the canonical equation-error observation model:
 
 $$
@@ -328,6 +334,7 @@ $$
 where $H = W^T W$, $\boldsymbol{g} = W^T \boldsymbol{\Gamma}$, and $c = \boldsymbol{\Gamma}^T \boldsymbol{\Gamma}$ are pre-computed BLAS-3 sufficient statistics.
 
 ### 4. Complete Optimization Problem with Physical Admissible Set $\mathcal{B}_{\mathrm{phys}}$
+
 $$
 \begin{aligned}
 \min_{\boldsymbol{\Theta}} \quad & \frac{d N}{2} \ln \left( \boldsymbol{\Theta}^T H \boldsymbol{\Theta} - 2 \boldsymbol{g}^T \boldsymbol{\Theta} + c \right) \\
@@ -347,13 +354,10 @@ $$
 Here, $S_{\text{pos}}$ selects strictly positive physical parameters (such as cart mass, link inertias, and friction coefficients), while admitting negative sector bounds for gravitational and geometric cross-terms (such as $x_{2,9}, x_{2,10}, x_{3,6} \le 0$ on the DIPC).
 
 ### 5. Downstream Dynamic Observer Parameterization & Covariance Calibration
+
 The estimated residual variance $\hat{\sigma}^2$ directly parameterizes state estimators and Kalman filters:
 - **Dynamic Process Disturbance Covariance:** In robotics state observers (EKF, UKF, MHE), generalized torque disturbances are parameterized by $Q_\tau = \hat{\sigma}^2 I_{d \times d}$ (or torque measurement noise covariance $R_\tau = \hat{\sigma}^2 I_{d \times d}$ when direct force/torque sensing is present).
-- **Parameter Estimation Covariance:** Calibrated parameter uncertainty ellipsoids are obtained directly from the inverted Hessian at the constrained optimum:
-  $$
-  \text{Cov}(\hat{\boldsymbol{\Theta}}) \approx \left( \nabla^2 J(\hat{\boldsymbol{\Theta}}) \right)^{-1} \approx \hat{\sigma}^2 H^{-1}
-  $$
-  or projected onto the null space of active linear equality constraints $\mathcal{N}([A_{\mathrm{sym}}^T, A_{\mathrm{skew}}^T]^T)$.
+- **Parameter Estimation Covariance:** Calibrated parameter uncertainty ellipsoids are obtained directly from the inverted Hessian at the constrained optimum: $\text{Cov}(\hat{\boldsymbol{\Theta}}) \approx ( \nabla^2 J(\hat{\boldsymbol{\Theta}}) )^{-1} \approx \hat{\sigma}^2 H^{-1}$, or projected onto the null space of active linear equality constraints $\mathcal{N}([A_{\mathrm{sym}}^T, A_{\mathrm{skew}}^T]^T)$.
 
 ---
 
