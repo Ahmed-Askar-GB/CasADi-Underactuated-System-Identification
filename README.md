@@ -276,9 +276,13 @@ This asymmetric formulation captures subtle directional variations while retaini
 
 ---
 
-## 🔬 Mathematical Formulations
+### 1. Partitioned Underactuated Dynamics
+Mechanical systems with $n$ generalized coordinates and $m < n$ independent control actuators partition into actuated ($\bm{q}_a \in \mathbb{R}^m$) and unactuated ($\bm{q}_u \in \mathbb{R}^{n-m}$) coordinates:
 
-. Partitioned Underactuated DynamicsMechanical systems with $n$ generalized coordinates and $m < n$ independent control actuators partition into actuated ($\boldsymbol{q}_a \in \mathbb{R}^m$) and unactuated ($\boldsymbol{q}_u \in \mathbb{R}^{n-m}$) coordinates:$$\begin{bmatrix} D_{aa}(\boldsymbol{q}) & D_{au}(\boldsymbol{q}) \\ D_{ua}(\boldsymbol{q}) & D_{uu}(\boldsymbol{q}) \end{bmatrix} \begin{bmatrix} \ddot{\boldsymbol{q}}_a \\ \ddot{\boldsymbol{q}}_u \end{bmatrix} + \begin{bmatrix} \boldsymbol{C}_{aa}\dot{\boldsymbol{q}}_a + \boldsymbol{C}_{au}\dot{\boldsymbol{q}}_u \\ \boldsymbol{C}_{ua}\dot{\boldsymbol{q}}_a + \boldsymbol{C}_{uu}\dot{\boldsymbol{q}}_u \end{bmatrix} + \begin{bmatrix} \boldsymbol{g}_a(\boldsymbol{q}) \\ \boldsymbol{g}_u(\boldsymbol{q}) \end{bmatrix} + \begin{bmatrix} \boldsymbol{\tau}_{fa}(\dot{\boldsymbol{q}}_a) \\ \boldsymbol{\tau}_{fu}(\dot{\boldsymbol{q}}_u) \end{bmatrix} = \begin{bmatrix} \boldsymbol{\tau}_a \\ \mathbf{0} \end{bmatrix}$$Because unactuated coordinates receive zero generalized control forces ($\boldsymbol{\tau}_u \equiv \mathbf{0}$), their identification equation is strictly homogeneous ($W_u \boldsymbol{\Theta} \approx \mathbf{0}$).
+$$\begin{bmatrix} D_{aa}(\bm{q}) & D_{au}(\bm{q}) \\ D_{ua}(\bm{q}) & D_{uu}(\bm{q}) \end{bmatrix} \begin{bmatrix} \ddot{\bm{q}}_a \\ \ddot{\bm{q}}_u \end{bmatrix} + \begin{bmatrix} \bm{C}_{aa}\dot{\bm{q}}_a + \bm{C}_{au}\dot{\bm{q}}_u \\ \bm{C}_{ua}\dot{\bm{q}}_a + \bm{C}_{uu}\dot{\bm{q}}_u \end{bmatrix} + \begin{bmatrix} \bm{g}_a(\bm{q}) \\ \bm{g}_u(\bm{q}) \end{bmatrix} + \begin{bmatrix} \bm{\tau}_{fa}(\dot{\bm{q}}_a) \\ \bm{\tau}_{fu}(\dot{\bm{q}}_u) \end{bmatrix} = \begin{bmatrix} \bm{\tau}_a \\ \mathbf{0} \end{bmatrix}$$
+
+Because unactuated coordinates receive zero generalized control forces ($\bm{\tau}_u \equiv \mathbf{0}$), their identification equation is strictly homogeneous ($W_u \bm{\Theta} \approx \mathbf{0}$).
+
 
 ### 2. Algorithmic Differentiation & Minimal Constraint Extraction via SVD/QR
 To eliminate polynomial explosion in symbolic computer algebra systems, the framework builds computational Directed Acyclic Graphs (DAGs) in CasADi and extracts exact constraint matrices automatically:
