@@ -293,17 +293,8 @@ $$
 
 Since the unactuated coordinates are not directly driven by control inputs ($\boldsymbol{\tau}_u \equiv \mathbf{0}$), the corresponding inverse-dynamics relation yields a homogeneous identification equation
 
-$$
-W_u(\mathbf{q},\dot{\mathbf{q}},\ddot{\mathbf{q}})\Theta \approx 0.
-$$
-
-$$
-W_u(\boldsymbol{q},\dot{\boldsymbol{q}},\ddot{\boldsymbol{q}})\,\boldsymbol{\Theta}
-\approx \mathbf{0},
-$$
-
+$$ W_u(\mathbf{q},\dot{\mathbf{q}},\ddot{\mathbf{q}})\Theta \approx 0. $$
 which forms the basis of the proposed parameter estimation framework.
-
 
 ### 2. Algorithmic Differentiation & Minimal Constraint Extraction via SVD/QR
 To eliminate polynomial explosion in symbolic computer algebra systems, the framework builds computational Directed Acyclic Graphs (DAGs) in CasADi and extracts exact constraint matrices automatically:
