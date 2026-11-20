@@ -244,14 +244,54 @@ t_pc = toc;
 
 theta_pc = full(sol.value(theta));
 res_pc = W_block * theta_pc - Gamma;
-sigma2_pc = mean(res_pc.^2);
+
+% Construct exact linear equality constraint matrix A_eq (16 x 24)
+% theta = [x1 (1:8); x2 (9:18); x3 (19:24)]
+A_eq = zeros(16, 24);
+A_eq(1, 2)  =  1; A_eq(1, 9)   = -1; % x1(2) == x2(1)
+A_eq(2, 3)  =  1; A_eq(2, 10)  = -1; % x1(3) == x2(2)
+A_eq(3, 4)  =  1; A_eq(3, 19)  = -1; % x1(4) == x3(1)
+A_eq(4, 13) =  1; A_eq(4, 20)  = -1; % x2(5) == x3(2)
+A_eq(5, 14) =  1; A_eq(5, 21)  = -1; % x2(6) == x3(3)
+A_eq(6, 12) =  1; A_eq(6, 14)  = -2; % x2(4) == 2 * x2(6)
+A_eq(7, 2)  =  1; A_eq(7, 5)   =  2; A_eq(7, 9)  = 1; % x1(2) + 2*x1(5) + x2(1) == 0
+A_eq(8, 3)  =  1; A_eq(8, 6)   =  2; A_eq(8, 10) = 1; % x1(3) + 2*x1(6) + x2(2) == 0
+A_eq(9, 3)  =  1; A_eq(9, 7)   =  1; A_eq(9, 10) = 1; % x1(3) + x1(7) + x2(2) == 0
+A_eq(10, 4) =  1; A_eq(10, 7)  =  1; A_eq(10, 19)= 1; % x1(4) + x1(7) + x3(1) == 0
+A_eq(11, 4) =  1; A_eq(11, 8)  =  2; A_eq(11, 19)= 1; % x1(4) + 2*x1(8) + x3(1) == 0
+A_eq(12, 14)=  1; A_eq(12, 15) =  2; A_eq(12, 21)= 1; % x2(6) + 2*x2(7) + x3(3) == 0
+A_eq(13, 16)=  1; A_eq(13, 23) =  2;                 % x2(8) + 2*x3(5) == 0
+A_eq(14, 22)=  1; A_eq(14, 20) = -1;                 % x3(4) == x3(2)
+A_eq(15, 21)=  1; A_eq(15, 23) = -1;                 % x3(3) == x3(5)
+A_eq(16, 18)=  1; A_eq(16, 24) = -1;                 % x2(10) == x3(6)
+
+% Determine Effective Degrees of Freedom & Null-Space Basis
+p = length(theta_pc);
+Z = null(A_eq);
+p_eff = size(Z, 2);
+
+N_total = length(Gamma);
+sigma2_mle = (res_pc' * res_pc) / N_total;
+sigma2_unbiased = (res_pc' * res_pc) / max(N_total - p_eff, 1);
+sigma2_pc = sigma2_unbiased;
+
+% Constraint-projected parameter covariance matrix and standard errors
+H_mat = W_block' * W_block;
+H_proj = Z' * H_mat * Z;
+Cov_theta_pc = sigma2_unbiased * (Z * (H_proj \ Z'));
+se_theta_pc = sqrt(max(0, diag(Cov_theta_pc)));
+
 err_pc = norm(theta_pc - theta_gt) / norm(theta_gt) * 100;
 norm_L2_pc = norm(theta_pc(9:18));
 norm_L3_pc = norm(theta_pc(19:24));
 
+fprintf('  PC-CasADi Effective Parameters (p_eff): %d (Total: %d, Null-space dim: %d)\n', ...
+    p_eff, p, size(Z, 2));
 fprintf('  PC-CasADi Relative Parameter Error: %.2f%%\n', err_pc);
-fprintf('  PC-CasADi Noise Variance: %.6f (True: %.6f, Rel Error: %.2f%%)\n', ...
-    sigma2_pc, sigma2_true, abs(sigma2_pc - sigma2_true)/sigma2_true * 100);
+fprintf('  PC-CasADi Noise Variance (Profile MLE): %.6f (Rel Error: %.2f%%)\n', ...
+    sigma2_mle, abs(sigma2_mle - sigma2_true)/sigma2_true * 100);
+fprintf('  PC-CasADi Noise Variance (REML Unbiased): %.6f (True: %.6f, Rel Error: %.2f%%)\n', ...
+    sigma2_unbiased, sigma2_true, abs(sigma2_unbiased - sigma2_true)/sigma2_true * 100);
 fprintf('  PC-CasADi Link 2 Norm: %.4f (Ground Truth: %.4f)\n', norm_L2_pc, norm(coff2));
 fprintf('  PC-CasADi Link 3 Norm: %.4f (Ground Truth: %.4f)\n', norm_L3_pc, norm(coff3));
 fprintf('  PC-CasADi Execution Time: %.3f ms\n', t_pc*1000);
@@ -469,6 +509,8 @@ fprintf('  Saved LaTeX Table: %s\n', tab_file);
 results = struct('theta_gt', theta_gt, 'theta_ols', theta_ols, 'theta_aguilar', theta_aguilar, 'theta_pc', theta_pc, ...
                  'err_ols', err_ols, 'err_ag', err_ag, 'err_pc', err_pc, ...
                  'sigma2_ols', sigma2_ols, 'sigma2_ag', sigma2_ag, 'sigma2_pc', sigma2_pc, ...
+                 'sigma2_mle', sigma2_mle, 'sigma2_unbiased', sigma2_unbiased, ...
+                 'Cov_pc', Cov_theta_pc, 'se_pc', se_theta_pc, 'p_eff', p_eff, 'Z', Z, ...
                  'rmse_pc', [rmse_cart_pc, rmse_s2_pc, rmse_s3_pc], ...
                  't', t, 'd1_true', d1_true, 's2_true', s2_true, 's3_true', s3_true, ...
                  'q_sim_pc', q_sim_pc, 'F1_clean', F1_clean, 'F1_noisy', F1_noisy, 'L1', L1, ...

@@ -13,7 +13,8 @@ function [F_sx, F_fn, W_F_fn] = nonlinear_friction(dq_sx, r_smooth)
         
         v = dq_sx(i);
         t_sym = tanh(r_smooth * v);
-        t_asym = (tanh(r_smooth * v)^2) / (abs(tanh(r_smooth * v)) + 1e-6);
+        % Strictly C-infinity smooth asymmetric transition (Eq. 47 in manuscript, replacing non-differentiable abs)
+        t_asym = tanh(r_smooth * v) * tanh(10 * r_smooth * v);
         
         F_sym = 0.5*(fc_plus + fc_minus)*t_sym + 0.5*(fv_plus + fv_minus)*v;
         F_asym = 0.5*(fc_plus - fc_minus)*t_asym + 0.5*(fv_plus - fv_minus)*v*t_sym;

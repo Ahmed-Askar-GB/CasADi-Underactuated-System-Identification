@@ -107,9 +107,10 @@ th_pcls_prop = res_filt_pcls.Theta;
 
 fprintf('  Solvers complete.\n');
 
-%% 4. Multi-Step Forward Simulation Validation
-fprintf('\n[Step 4/5] Multi-Step Forward Dynamic Simulation Validation (RK4)...\n');
-sim_len = 2500;
+%% 4. Multi-Step Forward Dynamic Simulation Validation (Full 20-second Horizon)
+fprintf('\n[Step 4/5] Multi-Step Forward Dynamic Simulation Validation (Full Horizon RK4)...\n');
+% Evaluated across full 20.0-s dataset (20,000 samples) as reported in manuscript Table VI
+sim_len = N; % Full 20.0-s horizon (N = 20,000)
 t_val = diff_data.t(1:sim_len);
 u_val = diff_data.tau(1:sim_len, 1);
 q_val = diff_data.q(1:sim_len, :);
@@ -119,7 +120,7 @@ dq_val = diff_data.dq(1:sim_len, :);
 [~, q_sim_ag,   ~, sim_metrics_ag]   = simulate_furuta(th_aguilar, t_val, u_val, q_val, dq_val, r_smooth);
 [~, q_sim_dls,  ~, sim_metrics_dls]  = simulate_furuta(th_direct_ls, t_val, u_val, q_val, dq_val, r_smooth);
 
-fprintf('  Simulation Tracking RMSE on Passive Pendulum (q2):\n');
+fprintf('  Full 20.0-s Simulation Tracking RMSE on Passive Pendulum (theta_2):\n');
 fprintf('    - Decoupled LS:         Diverged (Inertia singular, det(D)=0)\n');
 fprintf('    - Direct LS (U-LS):     %.4f rad (%.2f deg)\n', sim_metrics_dls.rmse_q2, rad2deg(sim_metrics_dls.rmse_q2));
 fprintf('    - Aguilar (UMF-LS):     %.4f rad (%.2f deg)\n', sim_metrics_ag.rmse_q2, rad2deg(sim_metrics_ag.rmse_q2));

@@ -116,6 +116,8 @@ TauF = bench_filtered.aguilar.TauF;
 fprintf('  -> Method 5: Filtered Physics-Constrained CasADi Opti (Proposed)...\n');
 res_filt_pcls = opti_estimator(Off, TauF, [filter_data.qf1, filter_data.qf2], opt_opts);
 th_pcls_prop = res_filt_pcls.Theta;
+fprintf('     [Uncertainty Quantification] Noise Variance (Profile MLE): %.6e, (REML Unbiased): %.6e (p_eff = %d)\n', ...
+    res_filt_pcls.sigma2_mle, res_filt_pcls.sigma2_unbiased, res_filt_pcls.p_eff);
 
 % --- Method 6: Filtered PC-CasADi with Asymmetric Friction ---
 fprintf('  -> Method 6: Filtered PC-CasADi with Asymmetric Nonlinear Friction...\n');

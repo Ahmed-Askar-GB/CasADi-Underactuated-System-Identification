@@ -1,10 +1,16 @@
 function result = opti_estimator(W, tau_vec, q_eval, opts)
     % opti_estimator: High-Performance CasADi Opti-based Physics-Constrained Least Squares (PC-LS)
-    % with joint noise variance estimation via Maximum Likelihood Estimation.
+    % with joint noise variance estimation via Maximum Likelihood Estimation and REML bias correction.
     %
     % Performance Architecture:
     %   Leverages sufficient statistics (Gram matrix condensation) to reduce a 40,000-sample
     %   symbolic DAG into a 9x9 quadratic form, accelerating IPOPT from ~6.5s to ~13ms (488x speedup).
+    %
+    % Uncertainty Quantification:
+    %   Implements equality-constrained null-space covariance projection and REML degrees-of-freedom
+    %   variance bias correction:
+    %     sigma2_unbiased = ||W*Theta - tau||^2 / (dN - p_eff)
+    %     Cov(Theta) = sigma2_unbiased * Z * (Z' * H * Z)^(-1) * Z'
     
     import casadi.*
     
@@ -66,6 +72,17 @@ function result = opti_estimator(W, tau_vec, q_eval, opts)
         opti.subject_to(Theta(10:np) >= 0);       % asymmetric friction parameters >= 0
     end
     
+    % Additional user-specified linear equality constraints (if provided)
+    if isfield(opts, 'A_eq') && ~isempty(opts.A_eq)
+        A_eq_mat = full(opts.A_eq);
+        if isfield(opts, 'b_eq') && ~isempty(opts.b_eq)
+            b_eq_vec = full(opts.b_eq);
+        else
+            b_eq_vec = zeros(size(A_eq_mat, 1), 1);
+        end
+        opti.subject_to(A_eq_mat * Theta == b_eq_vec);
+    end
+    
     % 2. Sylvester Positive Definiteness: Global Infimum Guarantee
     % For Furuta pendulum: det(D(q)) = (theta_1 + theta_2*sin^2(q2))*theta_4 - theta_3^2*cos^2(q2)
     % Minimized globally at q2 = 0 where sin(q2)=0, cos(q2)=1:
@@ -87,31 +104,72 @@ function result = opti_estimator(W, tau_vec, q_eval, opts)
     % --- Solve Problem ---
     try
         sol = opti.solve();
-        Theta_hat = sol.value(Theta);
+        Theta_hat = full(sol.value(Theta));
         res_hat = W * Theta_hat - tau_vec;
-        sigma2_hat = mean(res_hat.^2);
-        rmse_hat = sqrt(sigma2_hat);
+        
+        % Statistical Uncertainty Quantification (Null-space basis & REML bias correction)
+        p = length(Theta_hat);
+        if isfield(opts, 'A_eq') && ~isempty(opts.A_eq)
+            A_eq = full(opts.A_eq);
+            Z = null(A_eq);
+        elseif isfield(opts, 'A_sym') && isfield(opts, 'A_skew') && ~isempty([opts.A_sym; opts.A_skew])
+            A_eq = full([opts.A_sym; opts.A_skew]);
+            Z = null(A_eq);
+        else
+            A_eq = zeros(0, p);
+            Z = eye(p);
+        end
+        p_eff = size(Z, 2);
+        
+        sigma2_mle = (res_hat' * res_hat) / N_total;
+        sigma2_unbiased = (res_hat' * res_hat) / max(N_total - p_eff, 1);
+        rmse_hat = sqrt(sigma2_unbiased);
+        
+        % Constraint-projected parameter covariance matrix
+        H_mat = W' * W;
+        H_proj = Z' * H_mat * Z;
+        Cov_Theta = sigma2_unbiased * (Z * (H_proj \ Z'));
+        se_Theta = sqrt(max(0, diag(Cov_Theta)));
+        
         time_elapsed = toc(t_start);
         
         result = struct();
         result.Theta = Theta_hat;
         result.residual = res_hat;
         result.rmse = rmse_hat;
-        result.sigma2 = sigma2_hat;
+        result.sigma2 = sigma2_unbiased;         % Default unbiased estimate
+        result.sigma2_mle = sigma2_mle;           % Profile MLE estimate
+        result.sigma2_unbiased = sigma2_unbiased; % REML bias-corrected estimate
+        result.Cov = Cov_Theta;                   % Null-space projected parameter covariance
+        result.se = se_Theta;                     % Parameter standard errors
+        result.p_eff = p_eff;                     % Effective parameter degrees of freedom
+        result.Z = Z;                             % Orthonormal null-space basis
         result.time = time_elapsed;
         result.status = 'converged';
         result.cost = sol.value(obj);
         result.iterations = sol.stats.iter_count;
     catch ME
-        Theta_hat = opti.debug.value(Theta);
+        Theta_hat = full(opti.debug.value(Theta));
         res_hat = W * Theta_hat - tau_vec;
-        sigma2_hat = mean(res_hat.^2);
+        p = length(Theta_hat);
+        if isfield(opts, 'A_eq') && ~isempty(opts.A_eq)
+            Z = null(full(opts.A_eq));
+        else
+            Z = eye(p);
+        end
+        p_eff = size(Z, 2);
+        sigma2_mle = (res_hat' * res_hat) / N_total;
+        sigma2_unbiased = (res_hat' * res_hat) / max(N_total - p_eff, 1);
         
         result = struct();
         result.Theta = Theta_hat;
         result.residual = res_hat;
-        result.rmse = sqrt(sigma2_hat);
-        result.sigma2 = sigma2_hat;
+        result.rmse = sqrt(sigma2_unbiased);
+        result.sigma2 = sigma2_unbiased;
+        result.sigma2_mle = sigma2_mle;
+        result.sigma2_unbiased = sigma2_unbiased;
+        result.p_eff = p_eff;
+        result.Z = Z;
         result.time = toc(t_start);
         result.status = 'debug';
         result.error = ME.message;
